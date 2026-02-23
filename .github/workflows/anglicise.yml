@@ -1,0 +1,522 @@
+name: British English Spelling Check
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  anglicise:
+    name: Check British English Spelling
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate App Token
+        id: app_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets['XB_AI'] }}
+          private-key: ${{ secrets['XB_PK'] }}
+
+      - name: Setup bot identity
+        uses: XAOSTECH/dev-control/.github/actions/identity@main
+        with:
+          gpg-private-key: ${{ secrets['XB_GK'] }}
+          gpg-passphrase: ${{ secrets['XB_GP'] }}
+          user-token: ${{ secrets['XB_UT'] }}
+          bot-name: ${{ vars.BOT_NAME || 'xaos-bot' }}
+
+      - name: Check for American spellings
+        id: check
+        run: |
+          # British English Spelling Checker
+          # Flags American spellings that should be converted to British equivalents
+          #
+          # Patterns checked:
+          #   -ize → -ise (organize → organise)
+          #   -ization → -isation (organization → organisation)
+          #   -or → -our (color → colour)
+          #   -er → -re (center → centre)
+          #   -og → -ogue (catalog → catalogue)
+          #   -ense → -ence (defense → defence)
+          #   -l- → -ll- (canceled → cancelled)
+          #   Other common differences (gray → grey, etc.)
+
+          ISSUES_FOUND=0
+          ISSUE_OUTPUT=""
+
+          # American words to check (case-insensitive matching)
+          # Each line: american_word|british_word|pattern_category
+          read -r -d '' WORD_PAIRS << 'WORDLIST' || true
+          organize|organise|-ize → -ise
+          organizes|organises|-ize → -ise
+          organized|organised|-ize → -ise
+          organizing|organising|-ize → -ise
+          organization|organisation|-ization → -isation
+          organizations|organisations|-ization → -isation
+          organizational|organisational|-ization → -isation
+          recognize|recognise|-ize → -ise
+          recognizes|recognises|-ize → -ise
+          recognized|recognised|-ize → -ise
+          recognizing|recognising|-ize → -ise
+          customize|customise|-ize → -ise
+          customizes|customises|-ize → -ise
+          customized|customised|-ize → -ise
+          customizing|customising|-ize → -ise
+          customization|customisation|-ization → -isation
+          optimize|optimise|-ize → -ise
+          optimizes|optimises|-ize → -ise
+          optimized|optimised|-ize → -ise
+          optimizing|optimising|-ize → -ise
+          optimization|optimisation|-ization → -isation
+          optimizations|optimisations|-ization → -isation
+          initialize|initialise|-ize → -ise
+          initializes|initialises|-ize → -ise
+          initialized|initialised|-ize → -ise
+          initializing|initialising|-ize → -ise
+          initialization|initialisation|-ization → -isation
+          synchronize|synchronise|-ize → -ise
+          synchronizes|synchronises|-ize → -ise
+          synchronized|synchronised|-ize → -ise
+          synchronizing|synchronising|-ize → -ise
+          synchronization|synchronisation|-ization → -isation
+          authorize|authorise|-ize → -ise
+          authorizes|authorises|-ize → -ise
+          authorized|authorised|-ize → -ise
+          authorizing|authorising|-ize → -ise
+          authorization|authorisation|-ization → -isation
+          normalize|normalise|-ize → -ise
+          normalizes|normalises|-ize → -ise
+          normalized|normalised|-ize → -ise
+          normalizing|normalising|-ize → -ise
+          normalization|normalisation|-ization → -isation
+          visualize|visualise|-ize → -ise
+          visualizes|visualises|-ize → -ise
+          visualized|visualised|-ize → -ise
+          visualizing|visualising|-ize → -ise
+          visualization|visualisation|-ization → -isation
+          utilize|utilise|-ize → -ise
+          utilizes|utilises|-ize → -ise
+          utilized|utilised|-ize → -ise
+          utilizing|utilising|-ize → -ise
+          utilization|utilisation|-ization → -isation
+          finalize|finalise|-ize → -ise
+          finalizes|finalises|-ize → -ise
+          finalized|finalised|-ize → -ise
+          finalizing|finalising|-ize → -ise
+          localize|localise|-ize → -ise
+          localizes|localises|-ize → -ise
+          localized|localised|-ize → -ise
+          localizing|localising|-ize → -ise
+          localization|localisation|-ization → -isation
+          prioritize|prioritise|-ize → -ise
+          prioritizes|prioritises|-ize → -ise
+          prioritized|prioritised|-ize → -ise
+          prioritizing|prioritising|-ize → -ise
+          summarize|summarise|-ize → -ise
+          summarizes|summarises|-ize → -ise
+          summarized|summarised|-ize → -ise
+          summarizing|summarising|-ize → -ise
+          minimize|minimise|-ize → -ise
+          minimizes|minimises|-ize → -ise
+          minimized|minimised|-ize → -ise
+          minimizing|minimising|-ize → -ise
+          maximize|maximise|-ize → -ise
+          maximizes|maximises|-ize → -ise
+          maximized|maximised|-ize → -ise
+          maximizing|maximising|-ize → -ise
+          categorize|categorise|-ize → -ise
+          categorizes|categorises|-ize → -ise
+          categorized|categorised|-ize → -ise
+          categorizing|categorising|-ize → -ise
+          analyze|analyse|-ize → -ise
+          analyzes|analyses|-ize → -ise
+          analyzed|analysed|-ize → -ise
+          analyzing|analysing|-ize → -ise
+          analyzer|analyser|-ize → -ise
+          apologize|apologise|-ize → -ise
+          apologizes|apologises|-ize → -ise
+          apologized|apologised|-ize → -ise
+          apologizing|apologising|-ize → -ise
+          realize|realise|-ize → -ise
+          realizes|realises|-ize → -ise
+          realized|realised|-ize → -ise
+          realizing|realising|-ize → -ise
+          specialize|specialise|-ize → -ise
+          specializes|specialises|-ize → -ise
+          specialized|specialised|-ize → -ise
+          specializing|specialising|-ize → -ise
+          specialization|specialisation|-ization → -isation
+          standardize|standardise|-ize → -ise
+          standardizes|standardises|-ize → -ise
+          standardized|standardised|-ize → -ise
+          standardizing|standardising|-ize → -ise
+          standardization|standardisation|-ization → -isation
+          color|colour|-or → -our
+          colors|colours|-or → -our
+          colored|coloured|-or → -our
+          coloring|colouring|-or → -our
+          colorful|colourful|-or → -our
+          favor|favour|-or → -our
+          favors|favours|-or → -our
+          favored|favoured|-or → -our
+          favoring|favouring|-or → -our
+          favorable|favourable|-or → -our
+          favorite|favourite|-or → -our
+          favorites|favourites|-or → -our
+          honor|honour|-or → -our
+          honors|honours|-or → -our
+          honored|honoured|-or → -our
+          honoring|honouring|-or → -our
+          honorable|honourable|-or → -our
+          humor|humour|-or → -our
+          humors|humours|-or → -our
+          humored|humoured|-or → -our
+          humoring|humouring|-or → -our
+          humorous|humourous|-or → -our
+          labor|labour|-or → -our
+          labors|labours|-or → -our
+          labored|laboured|-or → -our
+          laboring|labouring|-or → -our
+          neighbor|neighbour|-or → -our
+          neighbors|neighbours|-or → -our
+          neighboring|neighbouring|-or → -our
+          neighborhood|neighbourhood|-or → -our
+          behavior|behaviour|-or → -our
+          behaviors|behaviours|-or → -our
+          behavioral|behavioural|-or → -our
+          flavor|flavour|-or → -our
+          flavors|flavours|-or → -our
+          flavored|flavoured|-or → -our
+          flavoring|flavouring|-or → -our
+          odor|odour|-or → -our
+          odors|odours|-or → -our
+          rumor|rumour|-or → -our
+          rumors|rumours|-or → -our
+          vapor|vapour|-or → -our
+          vapors|vapours|-or → -our
+          vigor|vigour|-or → -our
+          vigorous|vigourous|-or → -our
+          rigor|rigour|-or → -our
+          rigorous|rigourous|-or → -our
+          harbor|harbour|-or → -our
+          harbors|harbours|-or → -our
+          harbored|harboured|-or → -our
+          harboring|harbouring|-or → -our
+          savior|saviour|-or → -our
+          endeavor|endeavour|-or → -our
+          endeavors|endeavours|-or → -our
+          endeavored|endeavoured|-or → -our
+          endeavoring|endeavouring|-or → -our
+          center|centre|-er → -re
+          centers|centres|-er → -re
+          centered|centred|-er → -re
+          centering|centring|-er → -re
+          liter|litre|-er → -re
+          liters|litres|-er → -re
+          meter|metre|-er → -re
+          meters|metres|-er → -re
+          theater|theatre|-er → -re
+          theaters|theatres|-er → -re
+          fiber|fibre|-er → -re
+          fibers|fibres|-er → -re
+          caliber|calibre|-er → -re
+          specter|spectre|-er → -re
+          specters|spectres|-er → -re
+          scepter|sceptre|-er → -re
+          somber|sombre|-er → -re
+          defense|defence|-ense → -ence
+          defenses|defences|-ense → -ence
+          offense|offence|-ense → -ence
+          offenses|offences|-ense → -ence
+          pretense|pretence|-ense → -ence
+          analog|analogue|-og → -ogue
+          analogs|analogues|-og → -ogue
+          catalog|catalogue|-og → -ogue
+          catalogs|catalogues|-og → -ogue
+          cataloged|catalogued|-og → -ogue
+          cataloging|cataloguing|-og → -ogue
+          dialog|dialogue|-og → -ogue
+          dialogs|dialogues|-og → -ogue
+          prolog|prologue|-og → -ogue
+          epilog|epilogue|-og → -ogue
+          canceled|cancelled|-l- → -ll-
+          canceling|cancelling|-l- → -ll-
+          traveled|travelled|-l- → -ll-
+          traveling|travelling|-l- → -ll-
+          traveler|traveller|-l- → -ll-
+          travelers|travellers|-l- → -ll-
+          modeled|modelled|-l- → -ll-
+          modeling|modelling|-l- → -ll-
+          labeled|labelled|-l- → -ll-
+          labeling|labelling|-l- → -ll-
+          leveled|levelled|-l- → -ll-
+          leveling|levelling|-l- → -ll-
+          signaled|signalled|-l- → -ll-
+          signaling|signalling|-l- → -ll-
+          fueled|fuelled|-l- → -ll-
+          fueling|fuelling|-l- → -ll-
+          counseled|counselled|-l- → -ll-
+          counseling|counselling|-l- → -ll-
+          counselor|counsellor|-l- → -ll-
+          counselors|counsellors|-l- → -ll-
+          gray|grey|gray → grey
+          grays|greys|gray → grey
+          grayish|greyish|gray → grey
+          aging|ageing|aging → ageing
+          judgment|judgement|judgment → judgement
+          judgments|judgements|judgment → judgement
+          acknowledgment|acknowledgement|acknowledgment → acknowledgement
+          acknowledgments|acknowledgements|acknowledgment → acknowledgement
+          fulfill|fulfil|fulfill → fulfil
+          fulfills|fulfils|fulfill → fulfil
+          fulfilled|fulfilled|fulfill → fulfil
+          fulfilling|fulfilling|fulfill → fulfil
+          fulfillment|fulfilment|fulfillment → fulfilment
+          skillful|skilful|skillful → skilful
+          skillfully|skilfully|skillful → skilful
+          willful|wilful|willful → wilful
+          willfully|wilfully|willful → wilful
+          enroll|enrol|enroll → enrol
+          enrolls|enrols|enroll → enrol
+          enrolled|enrolled|enroll → enrol
+          enrolling|enrolling|enroll → enrol
+          enrollment|enrolment|enrollment → enrolment
+          installment|instalment|installment → instalment
+          installments|instalments|installment → instalment
+          plow|plough|plow → plough
+          plows|ploughs|plow → plough
+          plowed|ploughed|plow → plough
+          plowing|ploughing|plow → plough
+          WORDLIST
+
+          # Find files to check
+          FILES=$(find . -type f \( -name "*.md" -o -name "*.sh" -o -name "*.yaml" -o -name "*.yml" -o -name "*.txt" \) \
+            ! -path "./.git/*" \
+            ! -path "./node_modules/*" \
+            ! -path "./vendor/*" \
+            ! -path "./.github/workflows/*" \
+            ! -path "./workflows-templates/anglicise.yml" \
+            ! -path "./license-templates/*" \
+            2>/dev/null | sort)
+
+          echo "## British English Spelling Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 Checking $(echo "$FILES" | wc -l) files for American spellings..." | tee -a $GITHUB_STEP_SUMMARY
+          echo ""
+
+          # Track files needing fixes
+          declare -A FILES_TO_FIX
+
+          # Process each word pair
+          while IFS='|' read -r american british pattern; do
+            [[ -z "$american" ]] && continue
+            
+            echo "📝 Checking for: $american → $british"
+            
+            # Search for word (case-insensitive, whole word)
+            while IFS= read -r file; do
+              [[ -z "$file" ]] && continue
+              
+              # Find matches, excluding:
+              # - URLs and shields.io badge URL parameters (&color=, ?color=)
+              # - CLI flags with values (--align center, --foreground color)
+              # - Gum/TUI library options
+              # - Variable references ($color, ${color})
+              # - Assignment patterns (color=, COLOR=) including query params
+              MATCHES=$(grep -inw "$american" "$file" 2>/dev/null | \
+                grep -vE '(https?://|file://|[?&](color|center|gray)=[a-zA-Z0-9]+|"Authorization": "Bearer|types:[[:space:]]*\[[^]]+\]|--[a-z-]+ (center|color|gray)|\$\{?(color|center|gray)|}|\b(color|center|gray)[_A-Z]*=|gum |\\$)' || true)
+              
+              if [[ -n "$MATCHES" ]]; then
+                FILES_TO_FIX["$file"]=1
+                while IFS= read -r match; do
+                  [[ -z "$match" ]] && continue
+                  LINE_NUM=$(echo "$match" | cut -d: -f1)
+                  LINE_CONTENT=$(echo "$match" | cut -d: -f2- | sed 's/^[[:space:]]*//' | head -c 100)
+                  
+                  echo "  ❌ $file:$LINE_NUM - '$american' → '$british'"
+                  ISSUE_OUTPUT+="| \`$file:$LINE_NUM\` | $american | $british | $pattern |"$'\n'
+                  ISSUES_FOUND=$((ISSUES_FOUND + 1))
+                done <<< "$MATCHES"
+              fi
+            done <<< "$FILES"
+          done <<< "$WORD_PAIRS"
+
+          # Save word pairs for fixing step
+          echo "$WORD_PAIRS" > /tmp/word_pairs.txt
+
+          # Output results
+          echo ""
+          if [[ $ISSUES_FOUND -gt 0 ]]; then
+            echo "❌ Found $ISSUES_FOUND American spelling(s) in ${#FILES_TO_FIX[@]} file(s)"
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Found $ISSUES_FOUND American spelling(s) to convert**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Location | American 🇺🇸 | British 🇬🇧 | Pattern |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|-------------|------------|---------|" >> $GITHUB_STEP_SUMMARY
+            echo "$ISSUE_OUTPUT" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🔧 **A pull request will be created with automatic fixes.**" >> $GITHUB_STEP_SUMMARY
+            
+            echo "needs_fix=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ All spellings conform to British English standards."
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **All spellings conform to British English standards.**" >> $GITHUB_STEP_SUMMARY
+            echo "needs_fix=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Apply British English fixes
+        if: steps.check.outputs.needs_fix == 'true'
+        run: |
+          echo "🔧 Applying British English conversions..."
+          
+          # Read word pairs
+          WORD_PAIRS=$(cat /tmp/word_pairs.txt)
+          
+          # Find files to fix (same criteria as check)
+          FILES=$(find . -type f \( -name "*.md" -o -name "*.sh" -o -name "*.yaml" -o -name "*.yml" -o -name "*.txt" \) \
+            ! -path "./.git/*" \
+            ! -path "./node_modules/*" \
+            ! -path "./vendor/*" \
+            ! -path "./.github/workflows/*" \
+            ! -path "./workflows-templates/anglicise.yml" \
+            ! -path "./license-templates/*" \
+            2>/dev/null)
+          
+          FIXED_COUNT=0
+          
+          # Case-preserving replacement function
+          # Replaces american with british while preserving the original case pattern
+          case_preserve_replace() {
+            local file="$1"
+            local american="$2"
+            local british="$3"
+            
+            # Create temp file
+            local tmpfile=$(mktemp)
+            
+            # Process line by line to preserve case and skip certain patterns
+            while IFS= read -r line || [[ -n "$line" ]]; do
+              # Skip lines containing:
+              # - HTML attributes (align="center", style="color:")
+              # - CLI flags with values (--align center, --foreground color)
+              # - Gum/TUI commands and options
+              # - Variable references ($color, ${color}, COLOR_VAR)
+              # - Assignment patterns (color=, center=)
+              # - Escaped line continuations (trailing backslash)
+              # NOTE: filename exclusion is handled in the perl regex via (?!\.)
+              # so that 'colors' in a comment is fixed even if 'colours.sh' appears on the same line
+              if echo "$line" | grep -qE "(=[\"'](center|color)|types:[[:space:]]*\[[^]]+\]|--[a-z-]+ (center|color|gray)|--color|--center|\\$\\{?(color|center|gray)|\\b(COLOR|CENTER|GRAY)[_A-Z]*=|gum |\\\\$)"; then
+                echo "$line"
+              else
+                # Apply case-preserving replacement using perl
+                # (?!\.) prevents replacing when the word is directly followed by a dot (e.g. colors.sh)
+                echo "$line" | perl -pe "
+                  s/\\b${american}\\b(?!\\.)/
+                    my \$match = \$&;
+                    my \$repl = '${british}';
+                    if (\$match =~ \/^[A-Z]+\$\/) {
+                      # ALL CAPS
+                      uc(\$repl);
+                    } elsif (\$match =~ \/^[A-Z]\/) {
+                      # Title Case
+                      ucfirst(\$repl);
+                    } else {
+                      # lowercase
+                      \$repl;
+                    }
+                  /gei"
+              fi
+            done < "$file" > "$tmpfile"
+            
+            # Replace original file
+            mv "$tmpfile" "$file"
+          }
+          
+          # Apply replacements
+          while IFS='|' read -r american british pattern; do
+            [[ -z "$american" ]] && continue
+            
+            while IFS= read -r file; do
+              [[ -z "$file" ]] && continue
+              
+              # Check if file contains the word (case-insensitive, whole word)
+              # Exclude lines where the match is inside a code/CLI pattern (filename exclusion handled by perl (?!\.))
+              if grep -inw "$american" "$file" 2>/dev/null | grep -qvE "(https?://|[?&](color|center|gray)=[a-zA-Z0-9]+|\"Authorization\": \"Bearer|types:[[:space:]]*\[[^]]+\]|=[\"'](center|color)|--[a-z-]+ (center|color|gray)|--color|--center|\\$\\{?(color|center|gray)|\\b(COLOR|CENTER|GRAY)[_A-Z]*|gum |\\\\$)"; then
+                case_preserve_replace "$file" "$american" "$british"
+                echo "  ✓ Fixed in: $file"
+                FIXED_COUNT=$((FIXED_COUNT + 1))
+              fi
+            done <<< "$FILES"
+          done <<< "$WORD_PAIRS"
+          
+          echo "✅ Applied fixes to $FIXED_COUNT file(s)"
+
+      - name: Setup bot identity (if fixes needed)
+        id: import_gpg
+        if: steps.check.outputs.needs_fix == 'true'
+        uses: XAOSTECH/dev-control/.github/actions/identity@main
+        with:
+          gpg-private-key: ${{ secrets['XB_GK'] }}
+          gpg-passphrase: ${{ secrets['XB_GP'] }}
+          user-token: ${{ secrets['XB_UT'] }}
+          bot-name: ${{ vars.BOT_NAME || 'xaos-bot' }}
+
+      - name: Ensure automerge label exists
+        if: steps.check.outputs.needs_fix == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          # Create 'automerge' label if it doesn't exist
+          gh label create automerge \
+            --description "Automatically merge this PR" \
+            --color "3BEF67" \
+            2>/dev/null || true
+          echo "✅ Automerge label ensured"
+
+      - name: Create Pull Request
+        if: steps.check.outputs.needs_fix == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          # Stage changes first to check if there are any
+          git add -A
+          
+          # Check if there are actual changes to commit
+          if git diff --cached --quiet; then
+            echo "✅ No changes needed - all spellings already conform to British English"
+            echo "ℹ️ The check step found potential issues but the fix step determined they were false positives."
+            echo "   This can happen when matches are in excluded patterns (URLs, CLI flags, etc.)"
+            exit 0
+          fi
+          
+          # Create branch only if we have changes
+          BRANCH_NAME="anglicise/$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH_NAME"
+          
+          # Commit
+          git commit -m "chore: convert American spellings to British English" -m "Automated conversion of American spellings to British equivalents:" -m "- -ize → -ise (organize → organise)" -m "- -or → -our (color → colour)" -m "- -er → -re (center → centre)" -m "- -og → -ogue (catalog → catalogue)" -m "- -ense → -ence (defense → defence)" -m "- -l- → -ll- (canceled → cancelled)" -m "- gray → grey, aging → ageing, etc."
+          
+          # Push branch
+          git push origin "$BRANCH_NAME"
+          
+          # Create PR
+          gh pr create \
+            --title "chore: Convert American spellings to British English" \
+            --body "## Automated British English Conversion\n\nThis PR automatically converts American spellings to British English equivalents.\n\n### Patterns converted:\n- \`-ize\` → \`-ise\` (organize → organise)\n- \`-ization\` → \`-isation\` (organization → organisation)\n- \`-or\` → \`-our\` (color → colour)\n- \`-er\` → \`-re\` (center → centre)\n- \`-og\` → \`-ogue\` (catalog → catalogue)\n- \`-ense\` → \`-ence\` (defense → defence)\n- \`-l-\` → \`-ll-\` (canceled → cancelled)\n- Other common differences (gray → grey, aging → ageing, etc.)\n\n### Review notes:\n- All replacements use case-insensitive whole-word matching\n- File paths, URLs, and code identifiers are preserved\n- Please review the changes to ensure no false positives\n\n---
+            *Generated by [British English Spelling Check workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*" \
+            --base "${{ github.ref_name }}" \
+            --head "$BRANCH_NAME" \
+            --label "automerge"
+          
+          echo "✅ Pull request created successfully"
