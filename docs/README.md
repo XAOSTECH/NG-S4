@@ -1,3 +1,57 @@
+# NG-S4
+
+<!-- Project Shields/Badges -->
+<p align="center">
+  <a href="https://github.com/XAOSTECH/NG-S4">
+    <img alt="GitHub repo" src="https://img.shields.io/badge/GitHub-XAOSTECH%2F-NG-S4-181717?style=for-the-badge&logo=github">
+  </a>
+  <a href="https://github.com/XAOSTECH/NG-S4/releases">
+    <img alt="GitHub release" src="https://img.shields.io/github/v/release/XAOSTECH/NG-S4?style=for-the-badge&logo=semantic-release&colour=blue">
+  </a>
+  <a href="https://github.com/XAOSTECH/NG-S4/blob/main/LICENSE">
+    <img alt="License" src="https://img.shields.io/github/license/XAOSTECH/NG-S4?style=for-the-badge&colour=green">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/XAOSTECH/NG-S4/actions">
+    <img alt="CI Status" src="https://github.com/XAOSTECH/NG-S4/actions/workflows/bash-lint.yml/badge.svg?branch=Main>
+  </a>
+  <a href="https://github.com/XAOSTECH/NG-S4/issues">
+    <img alt="Issues" src="https://img.shields.io/github/issues/XAOSTECH/NG-S4?style=flat-square&logo=github&colour=yellow">
+  </a>
+  <a href="https://github.com/XAOSTECH/NG-S4/pulls">
+    <img alt="Pull Requests" src="https://img.shields.io/github/issues-pr/XAOSTECH/NG-S4?style=flat-square&logo=github&colour=purple">
+  </a>
+  <a href="https://github.com/XAOSTECH/NG-S4/stargazers">
+    <img alt="Stars" src="https://img.shields.io/github/stars/XAOSTECH/NG-S4?style=flat-square&logo=github&colour=gold">
+  </a>
+  <a href="https://github.com/XAOSTECH/NG-S4/network/members">
+    <img alt="Forks" src="https://img.shields.io/github/forks/XAOSTECH/NG-S4?style=flat-square&logo=github">
+  </a>
+</p>
+
+<p align="center">
+  <img alt="Last Commit" src="https://img.shields.io/github/last-commit/XAOSTECH/NG-S4?style=flat-square&logo=git&colour=blue">
+  <img alt="Repo Size" src="https://img.shields.io/github/repo-size/XAOSTECH/NG-S4?style=flat-square&logo=files&colour=teal">
+  <img alt="Code Size" src="https://img.shields.io/github/languages/code-size/XAOSTECH/NG-S4?style=flat-square&logo=files&colour=orange">
+  <img alt="Contributors" src="https://img.shields.io/github/contributors/XAOSTECH/NG-S4?style=flat-square&logo=github&colour=green">
+</p>
+
+<!-- Optional: Stability/Maturity Badge -->
+<p align="center">
+  <img alt="Stability" src="https://img.shields.io/badge/stability-stable-green?style=flat-square">
+  <img alt="Maintenance" src="https://img.shields.io/maintenance/yes/2026?style=flat-square">
+</p>
+
+---
+
+<p align="center">
+  <b>NG-S4: Nginx {{SHORT_DESCRIPTION}} Stunnel4 RTMP/RTMPS restream server with HLS for Linux {{SHORT_DESCRIPTION}} WSL2. Broadcast to multiple platforms (from Windows or Linux)!</b>
+</p>
+
+---
+
 # Nginx + Stunnel4 RTMP Restreaming Server
 
 This project provides a set of scripts to set up an Nginx server with RTMP module, optionally routing RTMP/RTMPS streams through Stunnel4. This allows you to restream to multiple platforms like Twitch, YouTube, and Kick.
@@ -282,4 +336,3 @@ Using `gphoto2` within WSL2 requires successful USB device passthrough from Wind
 *   **Permissions:** Ensure file and directory permissions are correct, especially for Nginx PID files, web content, HLS directories, and Stunnel run/log directories. The setup script attempts to handle these.
 *   **Firewall:** On standalone Linux, ensure your system firewall (e.g., `ufw`) allows incoming connections on the necessary ports (e.g., 1935 for RTMP, or any ports Stunnel listens on if accessed externally, 8080 for HLS HTTP).
 *   **WSL2 Networking:** If OBS or your streaming source can't connect to Nginx in WSL2, double-check the WSL2 IP address and your Windows Firewall rules (see WSL2 section).
-

@@ -19,7 +19,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 1. Fork the repository
 2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/NG-S4.git`
-3. Add upstream remote: `git remote add upstream https://github.com/xaoscience/NG-S4.git`
+3. Add upstream remote: `git remote add upstream https://github.com/XAOSTECH/NG-S4.git`
 4. Create a branch: `git checkout -b feature/your-feature-name`
 
 ## How to Contribute
@@ -49,7 +49,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 ```bash
 # Clone and enter directory
-git clone https://github.com/xaoscience/NG-S4.git
+git clone https://github.com/XAOSTECH/NG-S4.git
 cd NG-S4
 
 # Install dependencies (if applicable)
@@ -110,6 +110,6 @@ cd NG-S4
 
 ## Questions?
 
-Feel free to open a [Discussion](https://github.com/xaoscience/NG-S4/discussions) for questions or ideas.
+Feel free to open a [Discussion](https://github.com/XAOSTECH/NG-S4/discussions) for questions or ideas.
 
 Thank you for contributing! 🙏

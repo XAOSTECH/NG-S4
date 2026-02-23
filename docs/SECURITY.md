@@ -12,7 +12,7 @@
 We take security seriously. If you discover a security vulnerability, please follow these steps:
 
 1. **Do NOT** open a public issue
-2. Email details to the maintainers or use [GitHub Security Advisories](https://github.com/xaoscience/NG-S4/security/advisories/new)
+2. Email details to the maintainers or use [GitHub Security Advisories](https://github.com/XAOSTECH/NG-S4/security/advisories/new)
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
@@ -40,10 +40,10 @@ This security policy applies to:
 - Official releases
 - Documentation
 
-## Acknowledgments
+## Acknowledgements
 
 We appreciate responsible disclosure and will acknowledge security researchers who report valid vulnerabilities.
 
 ---
 
-For general bugs and feature requests, please use [GitHub Issues](https://github.com/xaoscience/NG-S4/issues).
+For general bugs and feature requests, please use [GitHub Issues](https://github.com/XAOSTECH/NG-S4/issues).
