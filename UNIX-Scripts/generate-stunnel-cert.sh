@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Generates SSL certificate for stunnel
 set -e
 error_exit() {
