@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Streams video from a gphoto2-compatible camera to an RTMP server using ffmpeg
 set -e
 DEFAULT_RTMP_URL="rtmp://127.0.0.1:1935/Cam1/live_camera"
