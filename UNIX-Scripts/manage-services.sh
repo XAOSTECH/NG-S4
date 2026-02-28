@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Manage Nginx and Stunnel4 services
 error_exit() {
     echo "Error: $1" >&2

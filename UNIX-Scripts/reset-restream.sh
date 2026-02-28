@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Reset Nginx and Stunnel4 installation
 error_exit() {
     echo "Error: $1" >&2
