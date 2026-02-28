@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Main setup script for Nginx + Stunnel4 Restreaming
 error_exit() {
     echo "Error: $1" >&2
