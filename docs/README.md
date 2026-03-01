@@ -63,7 +63,7 @@ This project provides a set of scripts to set up an Nginx server with RTMP modul
 *   **Multi-Platform Restreaming:** Configure Nginx to push your input stream to multiple RTMP/RTMPS endpoints.
 *   **Stunnel4 for RTMPS:** Securely stream to services requiring RTMPS by tunneling RTMP through Stunnel4.
 *   **HLS Output:** Configure Nginx to output HLS (HTTP Live Streaming) for playback in web browsers or media players.
-*   **Flexible Configuration:** Uses a `real.env/master.env` file for easy customization of stream keys, paths, and application names.
+*   **Flexible Configuration:** Uses a `real.env/master.env` file for easy customisation of stream keys, paths, and application names.
 *   **Helper Scripts:** Includes scripts for initial setup, service management (start, stop, status), SSL certificate generation for Stunnel, and a full reset.
 *   **WSL2 Support:** Includes a PowerShell script (`WSL2-Setup/Install-RestreamWSL.ps1`) to automate WSL2 setup, Linux distribution installation, and running the restream server setup on Windows.
 *   **WSL2 Management Scripts:**
@@ -291,7 +291,7 @@ The `stream-gphoto2-webcam.sh` script uses `ffmpeg` to process the output from `
     *   `-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100`: Generates a silent stereo audio track at 44.1kHz. This is crucial if your camera doesn't provide audio or for compatibility with some streaming platforms that require an audio track.
 *   Video Encoding (`libx264` - H.264):
     *   `-c:v libx264`: Specifies the H.264 video codec.
-    *   `-preset ultrafast`: A common preset for live streaming, prioritizing low CPU usage over quality/compression. Other presets include `superfast`, `veryfast`, `faster`, `fast`, `medium` (default), `slow`, `slower`, `veryslow`. Slower presets give better quality/compression at the cost of higher CPU.
+    *   `-preset ultrafast`: A common preset for live streaming, prioritising low CPU usage over quality/compression. Other presets include `superfast`, `veryfast`, `faster`, `fast`, `medium` (default), `slow`, `slower`, `veryslow`. Slower presets give better quality/compression at the cost of higher CPU.
     *   `-b:v 2000k` (e.g., 2 Mbps): Sets the target video bitrate. Adjust based on your internet upload speed and desired quality.
     *   `-maxrate 2500k`: Sets the maximum allowed video bitrate.
     *   `-bufsize 4000k`: Sets the decoder buffer size, often twice the maxrate.
