@@ -336,3 +336,13 @@ Using `gphoto2` within WSL2 requires successful USB device passthrough from Wind
 *   **Permissions:** Ensure file and directory permissions are correct, especially for Nginx PID files, web content, HLS directories, and Stunnel run/log directories. The setup script attempts to handle these.
 *   **Firewall:** On standalone Linux, ensure your system firewall (e.g., `ufw`) allows incoming connections on the necessary ports (e.g., 1935 for RTMP, or any ports Stunnel listens on if accessed externally, 8080 for HLS HTTP).
 *   **WSL2 Networking:** If OBS or your streaming source can't connect to Nginx in WSL2, double-check the WSL2 IP address and your Windows Firewall rules (see WSL2 section).
+
+<!-- TREE-VIZ-START -->
+
+## Git Tree Visualisation
+
+![Git Tree Visualisation](../.github/tree-viz/git-tree-mini.svg)
+
+[Full SVG](../.github/tree-viz/git-tree.svg) · [Interactive version](../.github/tree-viz/git-tree.html) · [View data](../.github/tree-viz/git-tree-data.json)
+
+<!-- TREE-VIZ-END -->

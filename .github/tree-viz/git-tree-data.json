@@ -1,0 +1,172 @@
+{
+  "metadata": {
+    "repository": "NG-S4",
+    "current_branch": "main",
+    "repo_url": "https://github.com/XAOSTECH/NG-S4",
+    "generated": "2026-03-30T01:30:11Z",
+    "max_commits": 500
+  },
+  "commits": [
+  {
+    "sha": "fd38376885fb6dac7ea72abe9dbffd5f806cef50",
+    "short": "fd38376",
+    "parents": "44916bbdd7be0d9f65a51788f59460d487a09b8d",
+    "author": "xaoscience",
+    "email": "69734795+xaoscience@users.noreply.github.com",
+    "date": "2026-03-23T17:54:58+01:00",
+    "timestamp": 1774284898,
+    "subject": "chore(dc-init): load workflows,actions",
+    "refs": "HEAD -> main, origin/main"
+  },
+  {
+    "sha": "44916bbdd7be0d9f65a51788f59460d487a09b8d",
+    "short": "44916bb",
+    "parents": "467c72d1a4abe0d67972f62cf9bfb6287fbc9fd3",
+    "author": "xaoscience",
+    "email": "69734795+xaoscience@users.noreply.github.com",
+    "date": "2026-03-15T06:29:08+01:00",
+    "timestamp": 1773552548,
+    "subject": "chore(dc-init): recover interrupted update",
+    "refs": ""
+  },
+  {
+    "sha": "467c72d1a4abe0d67972f62cf9bfb6287fbc9fd3",
+    "short": "467c72d",
+    "parents": "a48e235bf256d8fe75dd73ea4c8ab7727dd68a94",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-03-09T01:18:19Z",
+    "timestamp": 1773019099,
+    "subject": "chore: update CHANGELOG for v0.1.0 (re-release)",
+    "refs": "tag: v0.1.0, tag: latest"
+  },
+  {
+    "sha": "a48e235bf256d8fe75dd73ea4c8ab7727dd68a94",
+    "short": "a48e235",
+    "parents": "ae2d8395153cc97000d815f38ce4e55cfc44e49e",
+    "author": "xaoscience",
+    "email": "69734795+xaoscience@users.noreply.github.com",
+    "date": "2026-03-06T05:32:45+01:00",
+    "timestamp": 1772771565,
+    "subject": "chore(dc-init): update workflows and actions",
+    "refs": ""
+  },
+  {
+    "sha": "ae2d8395153cc97000d815f38ce4e55cfc44e49e",
+    "short": "ae2d839",
+    "parents": "734b9c21e5079d2ca81022dfc31186c665054826 b335e5834d754c8331967b2a4cbfa059b0c8875a",
+    "author": "github-actions[bot]",
+    "email": "41898282+github-actions[bot]@users.noreply.github.com",
+    "date": "2026-03-01T03:18:29Z",
+    "timestamp": 1772335109,
+    "subject": "Merge pull request #3 from XAOSTECH/anglicise/20260301-031812",
+    "refs": ""
+  },
+  {
+    "sha": "b335e5834d754c8331967b2a4cbfa059b0c8875a",
+    "short": "b335e58",
+    "parents": "734b9c21e5079d2ca81022dfc31186c665054826",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-03-01T03:18:12Z",
+    "timestamp": 1772335092,
+    "subject": "chore: convert American spellings to British English",
+    "refs": ""
+  },
+  {
+    "sha": "734b9c21e5079d2ca81022dfc31186c665054826",
+    "short": "734b9c2",
+    "parents": "9425035984b394f8c55b5af4408d8022cc1f3684 596597b063ae936199c1f44942a62039da2b9f71",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-02-28T16:41:22Z",
+    "timestamp": 1772296882,
+    "subject": "Merge pull request #2 from XAOSTECH:replace/20260228-164051\\n\\nchore: Replace text - automated update",
+    "refs": ""
+  },
+  {
+    "sha": "596597b063ae936199c1f44942a62039da2b9f71",
+    "short": "596597b",
+    "parents": "9425035984b394f8c55b5af4408d8022cc1f3684",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-02-28T16:40:51Z",
+    "timestamp": 1772296851,
+    "subject": "chore: replace text across repository",
+    "refs": ""
+  },
+  {
+    "sha": "9425035984b394f8c55b5af4408d8022cc1f3684",
+    "short": "9425035",
+    "parents": "2300d5ec531218c9d001076b308e33694f7c66a9",
+    "author": "xaoscience",
+    "email": "69734795+xaoscience@users.noreply.github.com",
+    "date": "2026-02-23T01:23:31+01:00",
+    "timestamp": 1771806211,
+    "subject": "dc-init update",
+    "refs": ""
+  },
+  {
+    "sha": "2300d5ec531218c9d001076b308e33694f7c66a9",
+    "short": "2300d5e",
+    "parents": "dfab00c6ab847f4848eef3e4f175c737537c8aa0",
+    "author": "xaoscience",
+    "email": "69734795+xaoscience@users.noreply.github.com",
+    "date": "2025-12-30T15:21:49Z",
+    "timestamp": 1767108109,
+    "subject": "gc-init",
+    "refs": ""
+  },
+  {
+    "sha": "dfab00c6ab847f4848eef3e4f175c737537c8aa0",
+    "short": "dfab00c",
+    "parents": "69c98e601519cedad1ac85c810761d3cc4185f2d",
+    "author": "χαος",
+    "email": "69734795+xaoscience@users.noreply.github.com",
+    "date": "2025-12-10T22:43:52+01:00",
+    "timestamp": 1765403032,
+    "subject": "Replace Unlicense with GNU General Public License",
+    "refs": ""
+  },
+  {
+    "sha": "69c98e601519cedad1ac85c810761d3cc4185f2d",
+    "short": "69c98e6",
+    "parents": "26c33934ed8892d653c0190172c8be69b28493d7",
+    "author": "χαος",
+    "email": "69734795+xaoscience@users.noreply.github.com",
+    "date": "2025-10-16T00:47:00+02:00",
+    "timestamp": 1760568420,
+    "subject": "Add contribution guidelines to CONTRIBUTING.md",
+    "refs": ""
+  },
+  {
+    "sha": "26c33934ed8892d653c0190172c8be69b28493d7",
+    "short": "26c3393",
+    "parents": "9b1b1a110fad55ea0f1cbf8c8292f9f5022cd489",
+    "author": "χαος",
+    "email": "69734795+xaoscience@users.noreply.github.com",
+    "date": "2025-10-16T00:42:40+02:00",
+    "timestamp": 1760568160,
+    "subject": "Add LICENSE file for public domain dedication",
+    "refs": ""
+  },
+  {
+    "sha": "9b1b1a110fad55ea0f1cbf8c8292f9f5022cd489",
+    "short": "9b1b1a1",
+    "parents": "",
+    "author": "xaoscience",
+    "email": "69734795+xaoscience@users.noreply.github.com",
+    "date": "2025-05-14T21:01:05+02:00",
+    "timestamp": 1747249265,
+    "subject": "First base.",
+    "refs": ""
+  }
+],
+  "branches": [
+  {"name":"fd38376885fb6dac7ea72abe9dbffd5f806cef50 chore(dc-init): load workflows,actions","sha":"*","current":false,"merged":false}
+],
+  "tags": [
+  {"name":"latest","sha":"08fb82a9b6483924a5c95a9634894e6202863882"},
+  {"name":"v0.1.0","sha":"288ef7e97e329df649c62529b1ba43c48b0573b5"}
+]
+}
