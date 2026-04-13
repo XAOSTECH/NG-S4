@@ -3,10 +3,54 @@
     "repository": "NG-S4",
     "current_branch": "main",
     "repo_url": "https://github.com/XAOSTECH/NG-S4",
-    "generated": "2026-03-30T01:30:11Z",
+    "generated": "2026-04-13T01:52:11Z",
     "max_commits": 500
   },
   "commits": [
+  {
+    "sha": "9f4651f76fdc738302f374ad176d00a72ccbf264",
+    "short": "9f4651f",
+    "parents": "d3637a503e2a19ca0fb68533950e667d473adef2",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-04-06T01:29:59Z",
+    "timestamp": 1775438999,
+    "subject": "chore: update CHANGELOG for v0.1.0 (re-release)",
+    "refs": "HEAD -> main, tag: v0.1.0, tag: latest, origin/main"
+  },
+  {
+    "sha": "d3637a503e2a19ca0fb68533950e667d473adef2",
+    "short": "d3637a5",
+    "parents": "f1b17ad2be1dec0c6ded3e05d468e024224b483c a0ed33d5c367981cb9d9e0982d218b8c69e3374f",
+    "author": "github-actions[bot]",
+    "email": "41898282+github-actions[bot]@users.noreply.github.com",
+    "date": "2026-04-01T03:34:38Z",
+    "timestamp": 1775014478,
+    "subject": "Merge pull request #4 from XAOSTECH/anglicise/20260401-033418",
+    "refs": ""
+  },
+  {
+    "sha": "a0ed33d5c367981cb9d9e0982d218b8c69e3374f",
+    "short": "a0ed33d",
+    "parents": "f1b17ad2be1dec0c6ded3e05d468e024224b483c",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-04-01T03:34:18Z",
+    "timestamp": 1775014458,
+    "subject": "chore: convert American spellings to British English",
+    "refs": ""
+  },
+  {
+    "sha": "f1b17ad2be1dec0c6ded3e05d468e024224b483c",
+    "short": "f1b17ad",
+    "parents": "fd38376885fb6dac7ea72abe9dbffd5f806cef50",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-03-30T01:30:11Z",
+    "timestamp": 1774834211,
+    "subject": "chore: update git tree visualisation",
+    "refs": ""
+  },
   {
     "sha": "fd38376885fb6dac7ea72abe9dbffd5f806cef50",
     "short": "fd38376",
@@ -16,7 +60,7 @@
     "date": "2026-03-23T17:54:58+01:00",
     "timestamp": 1774284898,
     "subject": "chore(dc-init): load workflows,actions",
-    "refs": "HEAD -> main, origin/main"
+    "refs": ""
   },
   {
     "sha": "44916bbdd7be0d9f65a51788f59460d487a09b8d",
@@ -38,7 +82,7 @@
     "date": "2026-03-09T01:18:19Z",
     "timestamp": 1773019099,
     "subject": "chore: update CHANGELOG for v0.1.0 (re-release)",
-    "refs": "tag: v0.1.0, tag: latest"
+    "refs": ""
   },
   {
     "sha": "a48e235bf256d8fe75dd73ea4c8ab7727dd68a94",
@@ -163,10 +207,10 @@
   }
 ],
   "branches": [
-  {"name":"fd38376885fb6dac7ea72abe9dbffd5f806cef50 chore(dc-init): load workflows,actions","sha":"*","current":false,"merged":false}
+  {"name":"9f4651f76fdc738302f374ad176d00a72ccbf264 chore: update CHANGELOG for v0.1.0 (re-release)","sha":"*","current":false,"merged":false}
 ],
   "tags": [
-  {"name":"latest","sha":"08fb82a9b6483924a5c95a9634894e6202863882"},
-  {"name":"v0.1.0","sha":"288ef7e97e329df649c62529b1ba43c48b0573b5"}
+  {"name":"latest","sha":"9ad2482dac8e04707c8a4427e735522460893674"},
+  {"name":"v0.1.0","sha":"6048aeceeca94518409eb69f3906ff12e630b2ed"}
 ]
 }
