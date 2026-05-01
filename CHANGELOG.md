@@ -17,7 +17,7 @@ chore: Replace text - automated update
 - chore: replace text across repository
 - dc-init update
 - gc-init
-- Replace Unlicense with GNU General Public License
+- Replace Unlicense with GNU General Public Licence
 - Add contribution guidelines to CONTRIBUTING.md
 - Add LICENSE file for public domain dedication
 
