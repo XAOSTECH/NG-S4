@@ -339,8 +339,6 @@ Using `gphoto2` within WSL2 requires successful USB device passthrough from Wind
 
 <!-- TREE-VIZ-START -->
 
-## Git Tree Visualisation
-
 ![Git Tree Visualisation](../.github/tree-viz/git-tree-mini.svg)
 
 [Full SVG](../.github/tree-viz/git-tree.svg) · [Interactive version](../.github/tree-viz/git-tree.html) · [View data](../.github/tree-viz/git-tree-data.json)
