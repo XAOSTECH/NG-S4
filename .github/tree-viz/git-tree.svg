@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" 
      xmlns:xlink="http://www.w3.org/1999/xlink"
-     width="1200" height="1420" 
-     viewBox="0 0 1200 1420">
+     width="1200" height="1460" 
+     viewBox="0 0 1200 1460">
   <defs>
     <radialGradient id="leafGradient">
       <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
@@ -29,13 +29,13 @@
     </style>
   </defs>
   
-  <rect width="1200" height="1420" fill="#f8fafc"/>
+  <rect width="1200" height="1460" fill="#f8fafc"/>
   <defs>
     <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
       <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#e2e8f0" stroke-width="0.5" opacity="0.3"/>
     </pattern>
   </defs>
-  <rect width="1200" height="1420" fill="url(#grid)"/>
+  <rect width="1200" height="1460" fill="url(#grid)"/>
   
   <!-- Branch connection lines -->
   <g id="branches">
@@ -44,63 +44,65 @@
     <line class="trunk-line" x1="600" y1="140" x2="600" y2="180"/>
     <line class="trunk-line" x1="600" y1="180" x2="600" y2="220"/>
     <line class="trunk-line" x1="600" y1="220" x2="600" y2="260"/>
-    <line class="trunk-line" x1="600" y1="260" x2="600" y2="380"/>
-    <path class="branch-line" d="M 600 260 C 600 276, 720 284, 720 300"/>
-    <path class="branch-line" d="M 720 300 C 720 332, 600 348, 600 380"/>
-    <line class="trunk-line" x1="600" y1="380" x2="600" y2="420"/>
+    <line class="trunk-line" x1="600" y1="260" x2="600" y2="300"/>
+    <line class="trunk-line" x1="600" y1="300" x2="600" y2="420"/>
+    <path class="branch-line" d="M 600 300 C 600 316, 720 324, 720 340"/>
+    <path class="branch-line" d="M 720 340 C 720 372, 600 388, 600 420"/>
     <line class="trunk-line" x1="600" y1="420" x2="600" y2="460"/>
     <line class="trunk-line" x1="600" y1="460" x2="600" y2="500"/>
     <line class="trunk-line" x1="600" y1="500" x2="600" y2="540"/>
-    <line class="trunk-line" x1="600" y1="540" x2="600" y2="660"/>
-    <path class="branch-line" d="M 600 540 C 600 556, 480 564, 480 580"/>
-    <path class="branch-line" d="M 480 580 C 480 612, 600 628, 600 660"/>
-    <line class="trunk-line" x1="600" y1="660" x2="600" y2="700"/>
+    <line class="trunk-line" x1="600" y1="540" x2="600" y2="580"/>
+    <line class="trunk-line" x1="600" y1="580" x2="600" y2="700"/>
+    <path class="branch-line" d="M 600 580 C 600 596, 480 604, 480 620"/>
+    <path class="branch-line" d="M 480 620 C 480 652, 600 668, 600 700"/>
     <line class="trunk-line" x1="600" y1="700" x2="600" y2="740"/>
     <line class="trunk-line" x1="600" y1="740" x2="600" y2="780"/>
     <line class="trunk-line" x1="600" y1="780" x2="600" y2="820"/>
     <line class="trunk-line" x1="600" y1="820" x2="600" y2="860"/>
-    <line class="trunk-line" x1="600" y1="860" x2="600" y2="980"/>
-    <path class="branch-line" d="M 600 860 C 600 876, 840 884, 840 900"/>
-    <path class="branch-line" d="M 840 900 C 840 932, 600 948, 600 980"/>
-    <line class="trunk-line" x1="600" y1="980" x2="600" y2="1100"/>
-    <path class="branch-line" d="M 600 980 C 600 996, 360 1004, 360 1020"/>
-    <path class="branch-line" d="M 360 1020 C 360 1052, 600 1068, 600 1100"/>
-    <line class="trunk-line" x1="600" y1="1100" x2="600" y2="1140"/>
+    <line class="trunk-line" x1="600" y1="860" x2="600" y2="900"/>
+    <line class="trunk-line" x1="600" y1="900" x2="600" y2="1020"/>
+    <path class="branch-line" d="M 600 900 C 600 916, 840 924, 840 940"/>
+    <path class="branch-line" d="M 840 940 C 840 972, 600 988, 600 1020"/>
+    <line class="trunk-line" x1="600" y1="1020" x2="600" y2="1140"/>
+    <path class="branch-line" d="M 600 1020 C 600 1036, 360 1044, 360 1060"/>
+    <path class="branch-line" d="M 360 1060 C 360 1092, 600 1108, 600 1140"/>
     <line class="trunk-line" x1="600" y1="1140" x2="600" y2="1180"/>
     <line class="trunk-line" x1="600" y1="1180" x2="600" y2="1220"/>
     <line class="trunk-line" x1="600" y1="1220" x2="600" y2="1260"/>
     <line class="trunk-line" x1="600" y1="1260" x2="600" y2="1300"/>
+    <line class="trunk-line" x1="600" y1="1300" x2="600" y2="1340"/>
   </g>
   <!-- Commit nodes -->
   <g id="commits">
-    <circle class="commit-leaf" cx="600" cy="60" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>4af4904: chore: update git tree visualisation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>640b4f9: chore: update git tree visualisation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d53f496: chore: update git tree visualisation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>cd189b9: chore: update git tree visualisation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5878a2c: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
-    <circle class="commit-leaf" cx="600" cy="260" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>a1c9190: Merge pull request #5 from XAOSTECH/anglicise/20260501-040625</title></circle>
-    <circle class="commit-leaf" cx="720" cy="300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>7b0e36f: chore: convert American spellings to British English</title></circle>
-    <circle class="commit-leaf" cx="600" cy="380" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>297401c: chore: update git tree visualisation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b8fd584: chore: update git tree visualisation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>cb8e106: chore: update git tree visualisation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9f4651f: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
-    <circle class="commit-leaf" cx="600" cy="540" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>d3637a5: Merge pull request #4 from XAOSTECH/anglicise/20260401-033418</title></circle>
-    <circle class="commit-leaf" cx="480" cy="580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>a0ed33d: chore: convert American spellings to British English</title></circle>
-    <circle class="commit-leaf" cx="600" cy="660" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>f1b17ad: chore: update git tree visualisation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>fd38376: chore(dc-init): load workflows,actions</title></circle>
-    <circle class="commit-leaf" cx="600" cy="740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>44916bb: chore(dc-init): recover interrupted update</title></circle>
-    <circle class="commit-leaf" cx="600" cy="780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>467c72d: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
-    <circle class="commit-leaf" cx="600" cy="820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>a48e235: chore(dc-init): update workflows and actions</title></circle>
-    <circle class="commit-leaf" cx="600" cy="860" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>ae2d839: Merge pull request #3 from XAOSTECH/anglicise/20260301-031812</title></circle>
-    <circle class="commit-leaf" cx="840" cy="900" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b335e58: chore: convert American spellings to British English</title></circle>
-    <circle class="commit-leaf" cx="600" cy="980" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>734b9c2: Merge pull request #2 from XAOSTECH:replace/20260228-164051\n\nchore: Replace text - automated update</title></circle>
-    <circle class="commit-leaf" cx="360" cy="1020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>596597b: chore: replace text across repository</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1100" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>9425035: dc-init update</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2300d5e: gc-init</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>dfab00c: Replace Unlicense with GNU General Public License</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>69c98e6: Add contribution guidelines to CONTRIBUTING.md</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>26c3393: Add LICENSE file for public domain dedication</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9b1b1a1: First base.</title></circle>
+    <circle class="commit-leaf" cx="600" cy="60" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>f05f59e: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>4af4904: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>640b4f9: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d53f496: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>cd189b9: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5878a2c: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="300" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>a1c9190: Merge pull request #5 from XAOSTECH/anglicise/20260501-040625</title></circle>
+    <circle class="commit-leaf" cx="720" cy="340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>7b0e36f: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="600" cy="420" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>297401c: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b8fd584: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>cb8e106: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9f4651f: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="580" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>d3637a5: Merge pull request #4 from XAOSTECH/anglicise/20260401-033418</title></circle>
+    <circle class="commit-leaf" cx="480" cy="620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>a0ed33d: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="600" cy="700" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>f1b17ad: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>fd38376: chore(dc-init): load workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="600" cy="780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>44916bb: chore(dc-init): recover interrupted update</title></circle>
+    <circle class="commit-leaf" cx="600" cy="820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>467c72d: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>a48e235: chore(dc-init): update workflows and actions</title></circle>
+    <circle class="commit-leaf" cx="600" cy="900" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>ae2d839: Merge pull request #3 from XAOSTECH/anglicise/20260301-031812</title></circle>
+    <circle class="commit-leaf" cx="840" cy="940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b335e58: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1020" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>734b9c2: Merge pull request #2 from XAOSTECH:replace/20260228-164051\n\nchore: Replace text - automated update</title></circle>
+    <circle class="commit-leaf" cx="360" cy="1060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>596597b: chore: replace text across repository</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1140" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>9425035: dc-init update</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2300d5e: gc-init</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>dfab00c: Replace Unlicense with GNU General Public License</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>69c98e6: Add contribution guidelines to CONTRIBUTING.md</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>26c3393: Add LICENSE file for public domain dedication</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9b1b1a1: First base.</title></circle>
   </g>
   
   <!-- Legend -->
@@ -117,12 +119,12 @@
   </g>
   
   <!-- Repository info -->
-  <g id="info" transform="translate(20, 1380)">
+  <g id="info" transform="translate(20, 1420)">
     <text x="0" y="0" class="branch-label" font-size="12" fill="#666">
       Repository: NG-S4
     </text>
     <text x="0" y="20" class="branch-label" font-size="10" fill="#999">
-      Generated: 2026-06-08 02:44:58 UTC
+      Generated: 2026-06-15 02:50:20 UTC
     </text>
   </g>
 </svg>
