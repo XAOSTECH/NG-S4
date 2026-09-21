@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="742" height="132" viewBox="0 0 742 132">
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="132" viewBox="0 0 760 132">
   <rect width="100%" height="100%" fill="#0d1117" rx="8"/>
   <g id="edges" stroke-linecap="round">
+    <line x1="740" y1="66" x2="722" y2="66" stroke="#2ea043" stroke-width="1.6" opacity="0.7"/>
     <line x1="722" y1="66" x2="704" y2="66" stroke="#2ea043" stroke-width="1.6" opacity="0.7"/>
     <line x1="704" y1="66" x2="686" y2="66" stroke="#2ea043" stroke-width="1.6" opacity="0.7"/>
     <line x1="686" y1="66" x2="668" y2="66" stroke="#2ea043" stroke-width="1.6" opacity="0.7"/>
@@ -47,6 +48,7 @@
     <line x1="38" y1="66" x2="20" y2="66" stroke="#2ea043" stroke-width="1.6" opacity="0.7"/>
   </g>
   <g id="nodes">
+    <circle cx="740" cy="66" r="3" fill="#3fb950" opacity="0.95"/>
     <circle cx="722" cy="66" r="3" fill="#3fb950" opacity="0.95"/>
     <circle cx="704" cy="66" r="3" fill="#3fb950" opacity="0.95"/>
     <circle cx="686" cy="66" r="3" fill="#3fb950" opacity="0.95"/>
@@ -88,5 +90,5 @@
     <circle cx="38" cy="66" r="3" fill="#3fb950" opacity="0.95"/>
     <circle cx="20" cy="66" r="3" fill="#3fb950" opacity="0.95"/>
   </g>
-  <text x="734" y="125" text-anchor="end" font-family="sans-serif" font-size="9" fill="#6e7681">40 nodes &#183; 0 tags</text>
+  <text x="752" y="125" text-anchor="end" font-family="sans-serif" font-size="9" fill="#6e7681">41 nodes &#183; 0 tags</text>
 </svg>
