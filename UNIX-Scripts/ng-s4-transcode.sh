@@ -16,6 +16,9 @@
 
 set -u
 
+# nginx `exec` may run with a minimal PATH, so guarantee the usual locations.
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin${PATH:+:$PATH}"
+
 log() { printf '%s [ng-s4] %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$*"; }
 die() { log "ERROR: $*"; exit 1; }
 
