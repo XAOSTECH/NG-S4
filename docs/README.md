@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://github.com/XAOSTECH/NG-S4/actions">
-    <img alt="CI Status" src="https://github.com/XAOSTECH/NG-S4/actions/workflows/bash-lint.yml/badge.svg?branch=Main>
+    <img alt="CI Status" src="https://github.com/XAOSTECH/NG-S4/actions/workflows/bash-lint.yml/badge.svg?branch=main">
   </a>
   <a href="https://github.com/XAOSTECH/NG-S4/issues">
     <img alt="Issues" src="https://img.shields.io/github/issues/XAOSTECH/NG-S4?style=flat-square&logo=github&colour=yellow">
@@ -47,295 +47,248 @@
 ---
 
 <p align="center">
-  <b>NG-S4: Nginx {{SHORT_DESCRIPTION}} Stunnel4 RTMP/RTMPS restream server with HLS for Linux {{SHORT_DESCRIPTION}} WSL2. Broadcast to multiple platforms (from Windows or Linux)!</b>
+  <b>NG-S4: an Nginx + Stunnel4 RTMP/RTMPS restream server with HLS preview and hardware-accelerated, HDR-aware multi-format transcoding for Linux and WSL2. Broadcast one source to many platforms at once.</b>
 </p>
 
 ---
 
-# Nginx + Stunnel4 RTMP Restreaming Server
+# Nginx + Stunnel4 RTMP restreaming server
 
-This project provides a set of scripts to set up an Nginx server with RTMP module, optionally routing RTMP/RTMPS streams through Stunnel4. This allows you to restream to multiple platforms like Twitch, YouTube, and Kick.
+NG-S4 turns a single Linux box into a multi-platform restream server built entirely from native, apt-installable components: nginx with the RTMP module, stunnel4 for RTMPS, and ffmpeg for encoding.
+Publish one master feed and NG-S4 fans it out to Twitch, YouTube, Kick and any other RTMP/RTMPS target, re-encoding each output independently so every platform receives a stream that suits its limits.
 
-**Date Created/Last Updated:** May 14, 2025
+The headline capability is per-target transcoding.
+You can send 4K60 HDR (HEVC, Main10) to YouTube while simultaneously delivering a tone-mapped SDR H.264 copy to Twitch that respects its 6000 kbps ceiling and lower frame rate, all from the same ingest.
 
-## Core Features
+The transcode engine detects the best encoder for the host at runtime, so the same project runs on an Ubuntu 26.04 workstation with an NVIDIA GPU (NVENC), a Raspberry Pi on Ubuntu 24.04 (V4L2 M2M), or any machine using software x264/x265.
 
-*   **Multi-Platform Restreaming:** Configure Nginx to push your input stream to multiple RTMP/RTMPS endpoints.
-*   **Stunnel4 for RTMPS:** Securely stream to services requiring RTMPS by tunneling RTMP through Stunnel4.
-*   **HLS Output:** Configure Nginx to output HLS (HTTP Live Streaming) for playback in web browsers or media players.
-*   **Flexible Configuration:** Uses a `real.env/master.env` file for easy customisation of stream keys, paths, and application names.
-*   **Helper Scripts:** Includes scripts for initial setup, service management (start, stop, status), SSL certificate generation for Stunnel, and a full reset.
-*   **WSL2 Support:** Includes a PowerShell script (`WSL2-Setup/Install-RestreamWSL.ps1`) to automate WSL2 setup, Linux distribution installation, and running the restream server setup on Windows.
-*   **WSL2 Management Scripts:**
-    *   `WSL2-Setup/WSL2-mgr.ps1`: For backing up and restoring your WSL2 distribution.
-    *   `WSL2-Setup/WSL2-UFW.ps1`: For managing Windows Firewall rules for WSL2.
-    *   These scripts are typically run from within their directory (e.g., `NG-S4/WSL2-Setup/`) using a command like: `powershell.exe -ExecutionPolicy RemoteSigned -File .\\WSL2-mgr.ps1`
+## Core features
 
-## Directory Structure
+*   **One ingest, many outputs:** publish once over RTMP (or SRT for HDR) and NG-S4 pushes a tailored encode to every enabled platform.
+*   **Per-platform profiles:** resolution, frame rate, codec, bitrate ceiling, buffer and HDR/SDR are configured independently per target in `master.env`.
+*   **HDR aware:** HDR sources pass through to HDR targets (HEVC Main10, BT.2020/PQ) and are tone-mapped to SDR (BT.709) for platforms that do not support HDR.
+*   **Hardware accelerated:** NVENC on NVIDIA hosts, V4L2 M2M on Raspberry Pi, automatic software fallback, all selected at runtime.
+*   **RTMPS via stunnel4:** platforms that require TLS (YouTube, Kick) are reached through local stunnel tunnels.
+*   **HLS preview:** the ingest is also published as low-latency HLS for monitoring on the LAN.
+*   **LAN friendly:** the allowed publish/play network is a single configuration value.
+*   **Host agnostic:** scripts derive their own paths and write no home directory into any config.
+*   **Native and lean:** bash, nginx, stunnel and ffmpeg only, installed from apt. No Python, no third-party runtimes.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    SRC["OBS / camera<br/>H.264 (RTMP) or HEVC HDR (SRT)"] -->|publish| ING["nginx ingest<br/>app: ingest"]
+    ING -->|on publish: exec| ENG["ng-s4-transcode.sh"]
+    ING -.->|HLS| LAN["LAN preview players"]
+    ENG -->|"H.264 SDR, 6000k, 1080p"| TW["Twitch (RTMP)"]
+    ENG -->|"HEVC HDR passthrough"| YTS["stunnel :19351"] --> YT["YouTube (RTMPS)"]
+    ENG -->|"H.264 SDR"| KIS["stunnel :19352"] --> KI["Kick (RTMPS)"]
+```
+
+## Directory structure
 
 ```
 NG-S4/
-├── example.env/            # Example configuration files
-│   ├── master.env
-│   ├── nginx.conf
-│   └── stunnel.conf
-├── real.env/               # Your actual configuration files (copy from example.env)
-│   ├── master.env          # Main environment variables and stream keys
-│   ├── nginx.conf          # Your Nginx configuration
-│   └── stunnel.conf        # Your Stunnel4 configuration
-├── UNIX-Scripts/           # Bash scripts for Linux setup and management
-│   ├── setup-restream.sh
-│   ├── generate-stunnel-cert.sh
-│   ├── manage-services.sh
-│   ├── reset-restream.sh
-│   └── stream-gphoto2-webcam.sh
-├── WSL2-Setup/             # PowerShell scripts for WSL2
-│   ├── Install-RestreamWSL.ps1
-│   ├── WSL2-mgr.ps1
-│   └── WSL2-UFW.ps1
-└── README.md               # This file
+├── example.env/            # Templates: copy into real.env and edit
+│   ├── master.env          # All configuration, including transcode profiles
+│   ├── nginx.conf          # Ingest + HLS (tokens substituted at setup)
+│   ├── stunnel.conf        # RTMPS tunnels for YouTube/Kick
+│   └── cleaned_up/         # Comment-free copies of the above
+├── real.env/               # Your live configuration (git ignored)
+├── UNIX-Scripts/
+│   ├── setup-restream.sh          # Install and configure everything
+│   ├── ng-s4-transcode.sh         # The fan-out transcode engine
+│   ├── ng-s4-doctor.sh            # Capability and configuration check
+│   ├── manage-services.sh         # Start/stop/status for nginx + stunnel4
+│   ├── generate-stunnel-cert.sh   # Self signed certificate for stunnel
+│   ├── reset-restream.sh          # Uninstall and clean up
+│   └── stream-gphoto2-webcam.sh   # Stream a DSLR/mirrorless camera to ingest
+├── WSL2-Setup/             # Optional PowerShell helpers for Windows/WSL2
+└── docs/README.md          # This file
 ```
 
-## Configuration (`real.env/`)
+## Requirements
 
-Before running any setup scripts, you **must** configure your environment.
+*   A Linux host with `sudo`. Tested targets:
+    *   Ubuntu 26.04 workstation with an NVIDIA GPU (NVENC encode).
+    *   Raspberry Pi on Ubuntu 24.04 (V4L2 M2M encode).
+*   Packages installed automatically by the setup script from apt: `nginx`, `libnginx-mod-rtmp`, `stunnel4`, `ffmpeg`, `gphoto2`.
+*   For NVENC you also need the NVIDIA driver present (`nvidia-smi` working). NG-S4 does not install GPU drivers; it detects and uses them.
+*   For HDR ingest you need an ffmpeg with `libx265` and `libzimg` (the `zscale` filter). Ubuntu's ffmpeg ships both. Run the doctor to confirm.
 
-1.  **Copy Example Configuration:**
-    If the `real.env/` directory does not contain `master.env`, `nginx.conf`, and `stunnel.conf`, copy them from the `example.env/` directory:
-    ```bash
-    mkdir -p real.env
-    cp example.env/master.env real.env/master.env
-    cp example.env/nginx.conf real.env/nginx.conf
-    cp example.env/stunnel.conf real.env/stunnel.conf
-    ```
-    *(The `WSL2-Setup/Install-RestreamWSL.ps1` script also attempts to do this copy if files are missing in `real.env`)*
-
-2.  **Edit `real.env/master.env`:**
-    Open `real.env/master.env` and update the following:
-    *   `XX_TW_KEY`, `XX_YT_KEY`, `XX_KI_KEY`: **Replace these with your actual stream keys.**
-    *   Review other path variables like `NGINX_WEB_CONTENT_SRC`, `HLS_BASE_DIR`, `STUNNEL_SSL_SUBJECT`, etc., and adjust if necessary.
-    *   The `envDr` should point to your `real.env` directory, and `scriptsDr` to `UNIX-Scripts`. These should generally not need changing if you maintain the project structure.
-
-3.  **Edit `real.env/nginx.conf`:**
-    This is a critical step. Your `nginx.conf` defines how RTMP streams are handled, where they are pushed, and how HLS is generated.
-    The file `example.env/nginx.conf` contains a comprehensive example incorporating common use cases like basic restreaming, HLS output, and applications for camera input (`Cam1`) and stream composition (`MultiMain`).
-    You should:
-    a.  Copy `example.env/nginx.conf` to `real.env/nginx.conf` (if not already done).
-    b.  Carefully review and **adapt `real.env/nginx.conf` to your specific needs.**
-
-    **Key considerations for `nginx.conf`:**
-    *   **Stream Keys:** Replace placeholders like `YOUR_TWITCH_STREAM_KEY_HERE` in your `real.env/nginx.conf` with your actual keys (ideally sourced from `master.env` if your setup scripts handle variable substitution, or hardcoded if not). The example applications `XX_TW`, `XX_YT`, `XX_KI` in `example.env/nginx.conf` show placeholders.
-    *   **Ingest URLs:** Ensure all `push rtmp://...` lines point to the correct ingest servers for each platform.
-    *   **Stunnel Ports:** If using Stunnel, make sure the Nginx `push` URLs for RTMPS services match the `accept` ports in your `stunnel.conf` (e.g., `rtmp://127.0.0.1:19351`).
-    *   **HLS Paths:** The `hls_path` in the RTMP block and the `root` in the HTTP `location /hls` block must correspond correctly. The `setup-restream.sh` script creates directories under `$HLS_BASE_DIR` (default `/mnt/hls`).
-    *   **External Scripts (`pushCam1`, `pushM`):**
-        *   For `pushCam1`-like functionality, your external script (using `gphoto2 | ffmpeg`) should push its RTMP output to an application defined in Nginx (e.g., `rtmp://<nginx_server_ip>:1935/Cam1`).
-        *   For `pushM`-like functionality, your external `ffmpeg` script will pull from Nginx applications (e.g., `rtmp://localhost:1935/Main1`) and push the combined output to another Nginx application (e.g., `rtmp://localhost:1935/MultiMain`). Nginx simply provides the RTMP endpoints.
-
-4.  **Edit `real.env/stunnel.conf`:**
-    *   If you are using Stunnel4 for RTMPS, configure the services here.
-    *   For each service (e.g., `[YT]`, `[KI]`):
-        *   `accept = 127.0.0.1:LOCAL_PORT` (e.g., `127.0.0.1:19351` for YouTube). This is the port Nginx will push to.
-        *   `connect = ACTUAL_RTMPS_INGEST_HOST:PORT` (e.g., `a.rtmp.youtube.com:443`). This is the actual RTMPS endpoint of the streaming service.
-    *   The `cert` path is typically `/etc/stunnel/stunnel.pem` and is generated by `UNIX-Scripts/generate-stunnel-cert.sh`.
-
-**Important `.gitignore` Note:**
-The `.gitignore` in this project is typically set up to ignore the contents of `real.env/*` (except for the directory itself and potentially placeholder files if you choose to commit them initially). This is to prevent accidental commitment of your personal stream keys. Ensure your personalized `real.env` files are not tracked by Git if you are pushing to a public repository.
-
----
-
-## I. WSL2 Installation (Windows 10/11)
-
-This method uses PowerShell to set up WSL2, install a Linux distribution, and then run the Linux setup scripts.
-
-### 1. Windows Prerequisites
-
-*   **Enable WSL & Virtual Machine Platform:**
-    You can do this via "Turn Windows features on or off" or by running PowerShell as Administrator:
-    ```powershell
-    dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-    dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
-    ```
-    A **reboot is required** after enabling these features.
-
-*   **Install a Linux Distribution from Microsoft Store (Optional if using `Install-RestreamWSL.ps1`):**
-    If you don't use the `WSL2-Setup/Install-RestreamWSL.ps1` script to install a distro, you can install one like "Ubuntu" (e.g., Ubuntu 22.04 LTS) from the Microsoft Store and set up your user.
-
-### 2. Run `WSL2-Setup/Install-RestreamWSL.ps1`
-
-This script automates several steps:
-*   Checks and helps enable WSL features (requires reboot if not already enabled).
-*   Updates the WSL kernel.
-*   Installs a specified Linux distribution (default: Ubuntu-22.04) if not already present.
-*   Prompts you to copy/verify configuration files from `example.env/` to `real.env/`.
-*   Executes the `UNIX-Scripts/setup-restream.sh` within the WSL distribution to install Nginx, Stunnel4, and configure them.
-
-**Steps:**
-1.  **Configure `real.env/` files as described in the "Configuration" section above.** This is crucial before running the script.
-2.  Open PowerShell (preferably as Administrator, especially if WSL features need enabling).
-3.  Navigate to the `NG-S4` project directory.
-4.  Run the script:
-    ```powershell
-    .\\WSL2-Setup\\Install-RestreamWSL.ps1
-    ```
-5.  Follow any on-screen prompts. The script will execute `sudo bash UNIX-Scripts/setup-restream.sh` inside WSL.
-
-### 3. WSL2 Network & Firewall (`WSL2-Setup/WSL2-UFW.ps1`)
-
-WSL2 runs with a virtualized network. To access services running inside WSL2 from your local network (e.g., to send a stream from OBS on another machine to Nginx in WSL2), you'll need to:
-
-1.  **Find WSL2's IP Address:**
-    Open your WSL2 terminal and run: `ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1`
-2.  **Port Forwarding / Firewall Rules:**
-    The `WSL2-Setup/WSL2-UFW.ps1` script can help create Windows Firewall rules to allow traffic to your WSL2 instance.
-    *   **Review and edit `WSL2-Setup/WSL2-UFW.ps1`** to ensure the ports you want to open (e.g., 1935 for RTMP, 8080 for HLS HTTP) are correctly listed.
-    *   Run `WSL2-Setup/WSL2-UFW.ps1` in an **Administrator PowerShell**.
-    *   You might need to update the firewall rules if your WSL2 IP address changes (it can change after a Windows reboot).
-
-### 4. WSL2 Backup and Restore (`WSL2-Setup/WSL2-mgr.ps1`)
-
-The `WSL2-Setup/WSL2-mgr.ps1` script provides functions to:
-*   **Backup (Export):** Create a `.tar` archive of your WSL2 distribution.
-*   **Restore (Import):** Restore a distribution from a `.tar` file, potentially as a new instance or overwriting an existing one.
-*   **Reset:** Unregister and re-import a distribution from a backup.
-
-**Usage:**
-1.  Open PowerShell.
-2.  Navigate to the `NG-S4/WSL2-Setup/` directory.
-3.  Run the script: `.\WSL2-mgr.ps1`
-4.  Follow the prompts to choose an action.
-
----
-
-## II. Standalone Unix/Linux Installation
-
-This method is for setting up the restreaming server directly on a dedicated Linux machine or a VM.
-
-### 1. Prerequisites
-
-*   A Linux system (e.g., Ubuntu, Debian).
-*   `sudo` access.
-*   `git` installed (`sudo apt install git`).
-
-### 2. Clone Repository
+## Quick start (standalone Linux)
 
 ```bash
-git clone <repository_url> # Replace <repository_url> with the actual URL
-cd NG-S4 # Or your chosen directory name
-```
+git clone <repository_url> && cd NG-S4
 
-### 3. Configure Environment
+# 1. Create your live configuration from the templates.
+mkdir -p real.env
+cp example.env/master.env real.env/master.env
+cp example.env/nginx.conf real.env/nginx.conf
+cp example.env/stunnel.conf real.env/stunnel.conf
 
-Follow the steps outlined in the main **"Configuration (`real.env/`)"** section at the beginning of this README to copy and edit your `master.env`, `nginx.conf`, and `stunnel.conf` files.
+# 2. Edit real.env/master.env: set LAN_CIDR, your stream keys and the per
+#    platform profiles (see below). For Kick, also set the ingest host in
+#    real.env/stunnel.conf.
+nano real.env/master.env
 
-### 4. Run Setup Script
-
-The main setup script will install Nginx, Stunnel4, libnginx-mod-rtmp, generate SSL certs for Stunnel, copy configurations, and start the services.
-
-```bash
+# 3. Install and start everything.
 sudo bash UNIX-Scripts/setup-restream.sh
+
+# 4. Verify the host can encode what you intend to send.
+bash UNIX-Scripts/ng-s4-doctor.sh
 ```
-Review the output for any errors.
 
-### 5. Managing Services (`UNIX-Scripts/manage-services.sh`)
+Then point OBS (or any encoder) at the ingest:
 
-This script helps you manage Nginx and Stunnel4.
+*   **Server:** `rtmp://<this-host>:1935/ingest`
+*   **Stream key:** any name, for example `live`
 
-**Usage:** `sudo bash UNIX-Scripts/manage-services.sh {start|stop|restart|status|enable|disable} [nginx|stunnel4|all]`
+Monitor locally while you stream:
 
-**Examples:**
-*   Check status of all services: `sudo bash UNIX-Scripts/manage-services.sh status all`
-*   Restart Nginx: `sudo bash UNIX-Scripts/manage-services.sh restart nginx`
-*   Stop Stunnel4: `sudo bash UNIX-Scripts/manage-services.sh stop stunnel4`
+*   **HLS preview:** `http://<this-host>:8080/hls/ingest/live/index.m3u8`
+*   **RTMP stats:** `http://<this-host>:8080/stat`
+*   **Health:** `http://<this-host>:8080/healthz`
 
-### 6. Generating Stunnel Certificate Manually (`UNIX-Scripts/generate-stunnel-cert.sh`)
+## Configuration (`real.env/master.env`)
 
-The `setup-restream.sh` script calls this automatically. However, if you need to regenerate the Stunnel SSL certificate manually (e.g., if it expires or you change the subject in `master.env`):
+All configuration lives in one file. The most important core values:
+
+| Variable | Purpose |
+| --- | --- |
+| `LAN_CIDR` | Network allowed to publish and play, for example `192.168.0.0/24`. |
+| `NGINX_HTTP_PORT` | Port for HLS, stats and health (default `8080`). |
+| `HLS_BASE_DIR` | Where HLS segments are written (default `/mnt/hls`). |
+| `INGEST_APP` | Name of the nginx RTMP application (default `ingest`). |
+| `ENCODER_BACKEND` | `auto`, `nvenc`, `v4l2m2m` or `software`. |
+| `SOURCE_HDR` | `auto` (probe the stream), `hdr`, or `sdr`. |
+| `LOG_DIR` | Setup, reset and transcode logs (default `/var/log/ng-s4`). |
+
+The nginx port, LAN range and HLS path are tokens in `nginx.conf`; the setup script renders them from `master.env`, so you edit values in one place only.
+
+## Transcoding and restream profiles
+
+`master.env` defines a space-separated `TARGETS` list (for example `TW YT KI`) and one block of variables per target.
+Each block is independent, so every platform gets exactly the format it needs.
+
+| Variable (per target) | Meaning |
+| --- | --- |
+| `<ID>_ENABLE` | `1` to stream to this target, `0` to skip. |
+| `<ID>_URL` / `<ID>_KEY` | Ingest base URL (no key) and the stream key. |
+| `<ID>_VCODEC` | `h264`, `hevc`, or `copy` (pass the source through untouched). |
+| `<ID>_HDR` | `hdr` keeps the HDR colour space; `sdr` tone-maps an HDR source down. |
+| `<ID>_SCALE` | Output size such as `1920:-2` (`-2` keeps the aspect ratio); empty keeps the source. |
+| `<ID>_FPS` | Output frame rate; empty keeps the source. |
+| `<ID>_VBITRATE` / `<ID>_MAXRATE` / `<ID>_BUFSIZE` | Rate control, used to respect platform ceilings. |
+| `<ID>_ABITRATE` | Audio bitrate (AAC, 48 kHz stereo). |
+
+### Worked example: 4K60 HDR to YouTube, downmixed SDR to Twitch
+
+This is the shipped default. YouTube receives the HDR master, Twitch receives a tone-mapped SDR copy within its limits:
 
 ```bash
-sudo bash UNIX-Scripts/generate-stunnel-cert.sh
+# Twitch: direct RTMP, tone-mapped to SDR, 1080p30, hard 6000 kbps ceiling.
+TW_ENABLE=1 TW_VCODEC=h264 TW_HDR=sdr TW_SCALE="1920:-2" TW_FPS=30
+TW_VBITRATE=6000k TW_MAXRATE=6000k TW_BUFSIZE=9000k
+
+# YouTube: RTMPS via stunnel, HDR preserved as HEVC Main10 at source resolution/fps.
+YT_ENABLE=1 YT_VCODEC=hevc YT_HDR=hdr YT_SCALE="" YT_FPS=""
+YT_VBITRATE=45000k YT_MAXRATE=51000k YT_BUFSIZE=90000k
 ```
-This will create/overwrite `/etc/stunnel/stunnel.pem`. Remember to restart Stunnel4 afterwards:
-`sudo bash UNIX-Scripts/manage-services.sh restart stunnel4`
 
-### 7. Resetting the Installation (`UNIX-Scripts/reset-restream.sh`)
+With an NVIDIA host this runs the YouTube path fully on the GPU (`hevc_nvenc`, Main10, BT.2020/PQ) and tone-maps the Twitch path on decode, so a single publish produces both outputs.
+Set `YT_VCODEC=copy` to pass an already-encoded HEVC HDR master straight through with no re-encode, for the lowest possible latency and load.
 
-This script will stop services, purge Nginx and Stunnel4 packages, and remove their configuration files and related directories. **Use with caution!**
+## Cross-platform notes
+
+The engine chooses an encoder backend at runtime (override with `ENCODER_BACKEND`):
+
+*   **NVIDIA (Ubuntu 26.04 host):** `h264_nvenc` / `hevc_nvenc`, with HDR HEVC passthrough kept entirely on the GPU. The setup script adds the nginx user to the `video` and `render` groups so the worker can reach `/dev/nvidia*`.
+*   **Raspberry Pi (Ubuntu 24.04):** `h264_v4l2m2m`. Because the Pi encoder has no 10-bit HDR path, any HDR target automatically falls back to software `libx265` for that output. Keep Pi workloads to 1080p SDR for real-time performance.
+*   **Software fallback:** `libx264` / `libx265` on any host.
+
+Run `UNIX-Scripts/ng-s4-doctor.sh` on each machine to print the detected backend, available encoders, HDR tone-mapping filters and the status of every configured target.
+
+## HDR ingest note
+
+The nginx RTMP module carries H.264/AAC only, so a true HDR (HEVC 10-bit) master cannot be ingested over RTMP.
+For HDR, ingest over SRT instead, which carries HEVC and HDR natively, and let the engine read it directly:
+
+```bash
+# In master.env:
+export INGEST_INPUT="srt://0.0.0.0:9000?mode=listener&latency=200"
+
+# Run the engine as the ingest (for example under systemd, or manually):
+sudo -u www-data /usr/local/bin/ng-s4-transcode.sh hdr
+```
+
+OBS can output SRT (MPEG-TS) with an HEVC encoder for this path.
+For SDR H.264 sources, the default RTMP ingest with the nginx `exec` trigger needs no extra steps.
+
+## LAN access and firewall
+
+*   Set `LAN_CIDR` to your subnet so other machines may publish and play.
+*   Open the required ports on the host firewall (for example with `ufw`): `1935/tcp` for RTMP and `NGINX_HTTP_PORT` (default `8080`) for HLS, stats and health.
+*   SRT ingest (if used) listens on its own UDP port, for example `9000/udp`.
+
+## Managing services
+
+```bash
+sudo bash UNIX-Scripts/manage-services.sh status all
+sudo bash UNIX-Scripts/manage-services.sh restart nginx
+sudo bash UNIX-Scripts/manage-services.sh stop stunnel4
+```
+
+Transcode logs are written per stream and per target under `LOG_DIR` (default `/var/log/ng-s4`), for example `transcode-live.log` and `transcode-live-YT.log`.
+
+## Camera (gphoto2) streaming
+
+`UNIX-Scripts/stream-gphoto2-webcam.sh` streams a gphoto2-compatible camera straight into the ingest, where it is transcoded and fanned out like any other source.
+It selects the best available H.264 encoder (NVENC, V4L2 M2M, or x264) automatically.
+
+```bash
+# Uses rtmp://127.0.0.1:1935/ingest/camera by default.
+sudo bash UNIX-Scripts/stream-gphoto2-webcam.sh
+# Or specify a different ingest target:
+sudo bash UNIX-Scripts/stream-gphoto2-webcam.sh rtmp://127.0.0.1:1935/ingest/cam1
+```
+
+Bitrate, frame rate and audio settings can be overridden with environment variables (`VIDEO_BITRATE`, `VIDEO_FRAMERATE`, `AUDIO_BITRATE`, and so on).
+
+## Stunnel and RTMPS
+
+Targets whose `*_URL` points at `127.0.0.1:<port>` are delivered over TLS by stunnel.
+The accept ports in `real.env/stunnel.conf` must match `YT_STUNNEL_PORT` / `KI_STUNNEL_PORT` in `master.env` (defaults `19351` and `19352`).
+Set the correct Kick ingest host in `stunnel.conf`; the certificate is generated by the setup script (regenerate manually with `sudo bash UNIX-Scripts/generate-stunnel-cert.sh`).
+
+## Resetting
 
 ```bash
 sudo bash UNIX-Scripts/reset-restream.sh
 ```
-After resetting, you can re-run `UNIX-Scripts/setup-restream.sh` for a fresh installation. Logs for the reset operation are stored in the directory specified by `LOG_DIR` in `master.env` (default: `/home/jnxlr/PROJECTS/LOG`).
 
-### 8. Streaming with a gphoto2 Compatible Camera (`UNIX-Scripts/stream-gphoto2-webcam.sh`)
+This stops the services and any running transcodes, purges nginx and stunnel4, and removes the installed engine (`/usr/local/bin/ng-s4-transcode.sh`), the pointer file (`/etc/default/ng-s4`) and the HLS directory. Logs under `LOG_DIR` are kept.
 
-This script facilitates streaming video directly from a `gphoto2`-compatible camera (e.g., many DSLRs, mirrorless cameras) to your Nginx RTMP server.
+## WSL2 (Windows)
 
-**Functionality:**
-*   Uses `gphoto2` to capture live video from the connected camera.
-*   Pipes the video to `ffmpeg` for encoding (H.264 video, AAC audio by default).
-*   Adds a silent audio track if the camera doesn't provide one, for better compatibility with RTMP servers.
-*   Streams the final output to a specified RTMP URL, typically an input application on your Nginx server (e.g., `rtmp://127.0.0.1:1935/Cam1/my_camera_feed`).
-
-**Prerequisites:**
-*   `gphoto2` and `ffmpeg` must be installed. The `setup-restream.sh` script now includes these in its installation process.
-*   A `gphoto2`-compatible camera connected to your Linux system.
-
-**Configuration:**
-*   The script `UNIX-Scripts/stream-gphoto2-webcam.sh` has configurable parameters at the top, such as default RTMP URL, video/audio bitrates, framerate, and ffmpeg preset.
-
-**FFmpeg Command Breakdown (Conceptual):**
-The `stream-gphoto2-webcam.sh` script uses `ffmpeg` to process the output from `gphoto2` and stream it. While the exact command can be seen in the script, here's a breakdown of common options you might find or want to adjust:
-*   Input & Audio Generation:
-    *   `-i pipe:0` or similar: Tells `ffmpeg` to read video data from standard input (piped from `gphoto2`).
-    *   `-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100`: Generates a silent stereo audio track at 44.1kHz. This is crucial if your camera doesn't provide audio or for compatibility with some streaming platforms that require an audio track.
-*   Video Encoding (`libx264` - H.264):
-    *   `-c:v libx264`: Specifies the H.264 video codec.
-    *   `-preset ultrafast`: A common preset for live streaming, prioritising low CPU usage over quality/compression. Other presets include `superfast`, `veryfast`, `faster`, `fast`, `medium` (default), `slow`, `slower`, `veryslow`. Slower presets give better quality/compression at the cost of higher CPU.
-    *   `-b:v 2000k` (e.g., 2 Mbps): Sets the target video bitrate. Adjust based on your internet upload speed and desired quality.
-    *   `-maxrate 2500k`: Sets the maximum allowed video bitrate.
-    *   `-bufsize 4000k`: Sets the decoder buffer size, often twice the maxrate.
-    *   `-vf "format=yuv420p"`: Sets the pixel format to `yuv420p`, which is widely compatible.
-    *   `-r 30`: Sets the output video framerate (e.g., 30 frames per second).
-*   Audio Encoding (AAC):
-    *   `-c:a aac`: Specifies the AAC audio codec.
-    *   `-b:a 128k` (e.g., 128 kbps): Sets the audio bitrate.
-    *   `-ar 44100`: Sets the audio sample rate (e.g., 44.1 kHz).
-*   Output:
-    *   `-f flv`: Specifies the output format as FLV, suitable for RTMP.
-    *   `"$RTMP_URL"`: The destination RTMP server URL (e.g., `rtmp://127.0.0.1:1935/Cam1/my_stream_key`).
-
-You can modify these parameters within the `stream-gphoto2-webcam.sh` script to fine-tune the output for your specific camera, network conditions, and streaming platform requirements.
-
-**Usage:**
-1.  Navigate to the scripts directory (e.g., if you are in `NG-S4`):
-    ```bash
-    cd UNIX-Scripts/
-    ```
-2.  Run the script. You may need `sudo` if `gphoto2` requires root permissions to access the camera hardware:
-    ```bash
-    sudo ./stream-gphoto2-webcam.sh [OPTIONAL_RTMP_URL]
-    ```
-    *   If `OPTIONAL_RTMP_URL` is not provided, it will use the `DEFAULT_RTMP_URL` defined inside the script (e.g., `rtmp://127.0.0.1:1935/Cam1/live_camera`).
-    *   **Example:** To stream to the `Cam1` application on your local Nginx server with a stream key `my_gphoto_feed`:
-        ```bash
-        sudo ./stream-gphoto2-webcam.sh rtmp://127.0.0.1:1935/Cam1/my_gphoto_feed
-        ```
-3.  Press `Ctrl+C` to stop the stream.
-
-**Note for WSL2 Users:**
-Using `gphoto2` within WSL2 requires successful USB device passthrough from Windows to the WSL2 environment. This can sometimes be complex to configure (often involving `usbipd-win`). If you intend to use this script in WSL2, ensure your camera is accessible within the WSL2 Linux distribution.
-
----
+The `WSL2-Setup/` PowerShell scripts remain available to install a distribution, run the Linux setup inside it, and manage Windows Firewall rules for reaching the ingest from the LAN.
+Hardware encode inside WSL2 is limited, so NVENC/HDR workloads are best run on a native Linux host.
+See the scripts in `WSL2-Setup/` for `Install-RestreamWSL.ps1`, `WSL2-mgr.ps1` (backup/restore) and `WSL2-UFW.ps1` (firewall).
 
 ## Troubleshooting
 
-*   **Check Service Status:** Use `sudo bash UNIX-Scripts/manage-services.sh status all`.
-*   **Nginx Logs:** Typically found in `/var/log/nginx/error.log` and `/var/log/nginx/access.log`.
-*   **Stunnel4 Logs:** Check the `output` path specified in your `/etc/stunnel/stunnel.conf` (e.g., `/var/log/stunnel4/stunnel.log`). The debug level can also be adjusted in `stunnel.conf`.
-*   **Permissions:** Ensure file and directory permissions are correct, especially for Nginx PID files, web content, HLS directories, and Stunnel run/log directories. The setup script attempts to handle these.
-*   **Firewall:** On standalone Linux, ensure your system firewall (e.g., `ufw`) allows incoming connections on the necessary ports (e.g., 1935 for RTMP, or any ports Stunnel listens on if accessed externally, 8080 for HLS HTTP).
-*   **WSL2 Networking:** If OBS or your streaming source can't connect to Nginx in WSL2, double-check the WSL2 IP address and your Windows Firewall rules (see WSL2 section).
+*   **Capability check:** run `UNIX-Scripts/ng-s4-doctor.sh` first; it flags missing encoders, filters or keys.
+*   **A target does not start:** check its `*_ENABLE`, `*_URL` and `*_KEY`. Placeholder keys are skipped on purpose. See `LOG_DIR/transcode-<name>-<ID>.log`.
+*   **nginx:** logs in `/var/log/nginx/error.log`; validate config with `sudo nginx -t`.
+*   **stunnel4:** logs at the `output` path in `/etc/stunnel/stunnel.conf`.
+*   **NVENC permission errors:** confirm the nginx user is in the `video`/`render` groups (the setup script adds it) and restart nginx.
+*   **Firewall:** ensure `1935/tcp` and the HTTP port are open for LAN sources.
+
+## Licence
+
+NG-S4 is licensed under the GNU General Public Licence v3 or later (see `LICENSE`).
+A commercial or separate licence is available on request from the owner.
 
 <!-- TREE-VIZ-START -->
 
