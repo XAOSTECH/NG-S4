@@ -5,8 +5,7 @@
 # Copyright (C) 2026 XAOSTECH. Licensed under the GNU GPL v3 or later.
 # A commercial or separate licence is available on request from the owner.
 #
-# Read only. Run on each host (NVIDIA box and Raspberry Pi) to confirm the
-# encoders, filters and configuration needed for HDR/SDR restreaming.
+# Read only. Run on each host (NVIDIA box and Raspberry Pi) to confirm the encoders, filters and configuration needed for HDR/SDR restreaming.
 set -u
 
 ok=0; warnc=0; badc=0

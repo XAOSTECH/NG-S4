@@ -5,10 +5,7 @@
 # Copyright (C) 2026 XAOSTECH. Licensed under the GNU GPL v3 or later.
 # A commercial or separate licence is available on request from the owner.
 #
-# Reads the target profiles from master.env, auto-detects the best encoder
-# backend (NVENC on NVIDIA hosts, V4L2 M2M on Raspberry Pi, software otherwise)
-# and launches one ffmpeg pipeline per enabled platform. HDR sources are passed
-# through for HDR targets and tone mapped to SDR for SDR only platforms.
+# Reads the target profiles from master.env, auto-detects the best encoder backend (NVENC on NVIDIA hosts, V4L2 M2M on Raspberry Pi, software otherwise) and launches one ffmpeg pipeline per enabled platform. HDR sources are passed through for HDR targets and tone mapped to SDR for SDR only platforms.
 #
 # Usage:
 #   ng-s4-transcode.sh [STREAM_NAME] [INPUT_URL]
