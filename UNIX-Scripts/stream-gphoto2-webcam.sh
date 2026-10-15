@@ -5,8 +5,7 @@
 # Copyright (C) 2026 XAOSTECH. Licensed under the GNU GPL v3 or later.
 # A commercial or separate licence is available on request from the owner.
 #
-# The camera feed lands on the ingest application, so the transcode engine then
-# fans it out to every enabled platform. Run with sudo if your camera needs it.
+# The camera feed lands on the ingest application, so the transcode engine then fans it out to every enabled platform. Run with sudo if your camera needs it.
 set -euo pipefail
 
 RTMP_URL="${1:-rtmp://127.0.0.1:1935/ingest/camera}"
