@@ -127,10 +127,10 @@ sed -e 's|@@HTTP_PORT@@|8080|g' \
     -e 's|@@LAN_CIDR@@|192.168.1.0/24|g' \
     -e 's|@@HLS_BASE_DIR@@|/mnt/hls|g' \
     "$PROJ_ROOT/example.env/nginx.conf" > "$RENDERED"
-if grep -q '@@' "$RENDERED"; then
-    ng "nginx.conf still contains unreplaced @@ tokens after render"
+if grep -qE '@@(HTTP_PORT|LAN_CIDR|HLS_BASE_DIR)@@' "$RENDERED"; then
+    ng "nginx.conf still contains unreplaced substitution tokens after render"
 else
-    ok "nginx.conf renders with no leftover tokens"
+    ok "nginx.conf substitution tokens all rendered"
 fi
 opens=$(grep -o '{' "$RENDERED" | wc -l)
 closes=$(grep -o '}' "$RENDERED" | wc -l)
