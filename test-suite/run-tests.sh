@@ -172,6 +172,11 @@ if printf '%s' "$TW_CMD" | grep -q 'fps=30'; then
 else
     ng "Twitch FPS not set to 30"
 fi
+if printf '%s' "$TW_CMD" | grep -q 'scale=w=min'; then
+    ok "Twitch scale is downscale-only (caps width, never upscales)"
+else
+    ng "Twitch scale is not capped against upscaling"
+fi
 
 # --------------------------------------------------------------------------
 section "4. YouTube: HDR source, HDR output, HLS ingest (software hevc)"
