@@ -241,7 +241,8 @@ fi
 section "6. YouTube: HDR output, HLS ingest via stunnel (Host header)"
 # --------------------------------------------------------------------------
 CONF_STUN="$WORK/stun.env"
-sed 's/^export YT_STUNNEL_PORT=""/export YT_STUNNEL_PORT="19351"/' "$CONF" > "$CONF_STUN"
+cp "$CONF" "$CONF_STUN"
+echo 'export YT_STUNNEL_PORT="19351"' >> "$CONF_STUN"
 LOG="$WORK/yt_stun.log"; : > "$LOG"
 FFCMD_LOG="$LOG" NG_S4_MASTER_ENV="$CONF_STUN" \
     LOG_DIR="$WORK/logs" TRANSCODE_LOG_DIR="$WORK/logs" \
@@ -258,10 +259,10 @@ if printf '%s' "$YT_STUN" | grep -q 'Host:.*upload.youtube.com'; then
 else
     ng "Host header missing or incorrect for stunnel HLS path"
 fi
-if printf '%s' "$YT_STUN" | grep -q '^http://'; then
-    ok "YouTube stunnel path uses plain HTTP (stunnel adds TLS)"
+if printf '%s' "$YT_STUN" | grep -q 'http://127.0.0.1:19351'; then
+    ok "YouTube stunnel path uses plain HTTP to the local port (stunnel adds TLS)"
 else
-    ng "YouTube stunnel path URL should be http:// not https://"
+    ng "YouTube stunnel path should use http://127.0.0.1:19351 not https://"
 fi
 
 # --------------------------------------------------------------------------
@@ -291,7 +292,45 @@ else
 fi
 
 # --------------------------------------------------------------------------
-section "9. Test video probe"
+section "9. Local HLS sink needs no key"
+# --------------------------------------------------------------------------
+CONF_LOCAL="$WORK/local.env"
+cat > "$CONF_LOCAL" <<LOCALCONF
+export TARGETS="LO"
+export LO_ENABLE="1" LO_LABEL="LocalHLS" LO_INGEST="local"
+export LO_URL="$WORK/localout" LO_KEY=""
+export LO_VCODEC="h264" LO_HDR="sdr" LO_SCALE="1280:-2" LO_FPS="30"
+export LO_VBITRATE="3000k" LO_MAXRATE="3000k" LO_BUFSIZE="6000k"
+export LO_ABITRATE="128k" LO_GOP_SECONDS="2"
+LOCALCONF
+LOG="$WORK/local.log"; : > "$LOG"
+FFCMD_LOG="$LOG" NG_S4_MASTER_ENV="$CONF_LOCAL" LOG_DIR="$WORK/logs" \
+    TRANSCODE_LOG_DIR="$WORK/logs" SOURCE_HDR=sdr ENCODER_BACKEND=software \
+    bash "$ENGINE" localtest 2>/dev/null
+LO_CMD=$(grep 'localout' "$LOG" || true)
+if [[ -n "$LO_CMD" ]]; then
+    ok "Local sink target runs with an empty key"
+else
+    ng "Local sink target did not run with an empty key"
+fi
+if printf '%s' "$LO_CMD" | grep -q '\-f hls'; then
+    ok "Local sink uses HLS output"
+else
+    ng "Local sink output is not HLS"
+fi
+if printf '%s' "$LO_CMD" | grep -q 'index.m3u8'; then
+    ok "Local sink writes index.m3u8 to the given directory"
+else
+    ng "Local sink playlist path incorrect"
+fi
+if printf '%s' "$LO_CMD" | grep -q 'method PUT'; then
+    ng "Local sink should not use HTTP PUT"
+else
+    ok "Local sink does not use HTTP PUT (plain file write)"
+fi
+
+# --------------------------------------------------------------------------
+section "10. Test video probe"
 # --------------------------------------------------------------------------
 VIDEO="$SUITE_DIR/testIMG+AUDIO.mkv"
 if [[ ! -f "$VIDEO" ]]; then
