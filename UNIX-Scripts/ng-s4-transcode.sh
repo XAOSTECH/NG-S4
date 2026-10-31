@@ -222,11 +222,27 @@ build_target_cmd() {
         local IFS=,; vf="${filt[*]}"; unset IFS
     fi
 
-    local out="${url%/}/${key}"
+    # Output: HLS PUT over HTTPS (YouTube HDR) or FLV over RTMP (Twitch, Kick).
+    local ingest; ingest="$(get "${id}_INGEST" rtmp)"
+    local out
+    local -a out_args=()
+    if [[ "$ingest" == "hls" ]]; then
+        local hlstime hlssegs
+        hlstime="$(get "${id}_HLS_TIME" 2)"
+        hlssegs="$(get "${id}_HLS_SEGS" 5)"
+        out="${url}?cid=${key}&copy=0&file=live.m3u8"
+        out_args=(-f hls -hls_time "$hlstime" -hls_list_size "$hlssegs"
+                  -hls_flags delete_segments+append_list
+                  -hls_segment_type mpegts
+                  -method PUT -http_persistent 1 "$out")
+    else
+        out="${url%/}/${key}"
+        out_args=(-f flv "$out")
+    fi
 
     CMD=(ffmpeg "${in_args[@]}")
     [[ -n "$vf" ]] && CMD+=(-vf "$vf")
-    CMD+=(-map 0:v:0 -map "0:a:0?" "${venc[@]}" "${aenc[@]}" -f flv "$out")
+    CMD+=(-map 0:v:0 -map "0:a:0?" "${venc[@]}" "${aenc[@]}" "${out_args[@]}")
 
     CMD_LABEL="$label"
     CMD_ID="$id"
