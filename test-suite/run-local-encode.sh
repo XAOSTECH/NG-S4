@@ -17,7 +17,7 @@ set -u
 SUITE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJ_ROOT="$(cd "$SUITE_DIR/.." && pwd)"
 VIDEO="${1:-$SUITE_DIR/testIMG+AUDIO.mkv}"
-OUT="${OUT:-/tmp/ng-s4-test/hls}"
+OUT="${OUT:-${TMPDIR:-/tmp}/ng-s4-test-$UID}"
 DURATION="${DURATION:-15}"
 
 command -v ffmpeg >/dev/null 2>&1 || { echo "ffmpeg not found; run this on the host."; exit 1; }
