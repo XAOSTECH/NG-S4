@@ -335,7 +335,35 @@ else
 fi
 
 # --------------------------------------------------------------------------
-section "10. Test video probe"
+section "10. Global bitrate cap"
+# --------------------------------------------------------------------------
+CONF_CAP="$WORK/cap.env"
+cp "$CONF" "$CONF_CAP"
+echo 'export MAX_VIDEO_BITRATE="22000k"' >> "$CONF_CAP"
+LOG="$WORK/cap.log"; : > "$LOG"
+FFCMD_LOG="$LOG" NG_S4_MASTER_ENV="$CONF_CAP" LOG_DIR="$WORK/logs" \
+    TRANSCODE_LOG_DIR="$WORK/logs" SOURCE_HDR=hdr ENCODER_BACKEND=software \
+    bash "$ENGINE" live 2>/dev/null
+YT_CAP=$(grep 'upload.youtube.com' "$LOG" || true)
+TW_CAP=$(grep 'rtmp://lhr' "$LOG" || true)
+if printf '%s' "$YT_CAP" | grep -q 'b:v 22000k'; then
+    ok "YouTube bitrate capped to the global limit (22000k)"
+else
+    ng "YouTube bitrate not capped to 22000k"
+fi
+if printf '%s' "$YT_CAP" | grep -q '45000k'; then
+    ng "YouTube still carries the uncapped 45000k bitrate"
+else
+    ok "YouTube uncapped 45000k value is gone"
+fi
+if printf '%s' "$TW_CAP" | grep -q 'b:v 6000k'; then
+    ok "Twitch (already below the cap) is unaffected (6000k)"
+else
+    ng "Twitch bitrate changed unexpectedly"
+fi
+
+# --------------------------------------------------------------------------
+section "11. Test video probe"
 # --------------------------------------------------------------------------
 VIDEO="$SUITE_DIR/testIMG+AUDIO.mkv"
 if [[ ! -f "$VIDEO" ]]; then
