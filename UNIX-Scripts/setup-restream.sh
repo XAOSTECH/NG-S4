@@ -107,30 +107,61 @@ start_or_restart() {
     fi
 }
 
-# Kill whatever still listens on a TCP port so a restart can bind it cleanly.
+# Report the process holding 127.0.0.1:<port> (name, pid, listen socket).
+port_holder() { ss -ltnpH "sport = :$1" 2>/dev/null; }
+
+# Terminate whatever still listens on a TCP port so a restart can bind it.
 free_tcp_port() {
     local port="$1" pid n
     command -v ss >/dev/null 2>&1 || return 0
     for n in 1 2 3 4 5; do
         ss -ltnH "sport = :$port" 2>/dev/null | grep -q . || return 0
-        pid="$(ss -ltnpH "sport = :$port" 2>/dev/null | grep -oE 'pid=[0-9]+' | head -n1 | cut -d= -f2)"
-        [[ -n "$pid" ]] && { echo "  freeing port $port (pid $pid)"; kill "$pid" 2>/dev/null; }
+        pid="$(port_holder "$port" | grep -oE 'pid=[0-9]+' | head -n1 | cut -d= -f2)"
+        [[ -n "$pid" ]] && kill "$pid" 2>/dev/null
         sleep 0.3
     done
-    pid="$(ss -ltnpH "sport = :$port" 2>/dev/null | grep -oE 'pid=[0-9]+' | head -n1 | cut -d= -f2)"
+    pid="$(port_holder "$port" | grep -oE 'pid=[0-9]+' | head -n1 | cut -d= -f2)"
     [[ -n "$pid" ]] && kill -9 "$pid" 2>/dev/null || true
 }
 
 echo "Enabling and starting services..."
 # Ubuntu's stunnel4 ships both an LSB service and a native stunnel@.service; a
 # leftover or duplicate instance can keep holding the accept port and make the
-# next start fail with "address already in use". Stop every variant and free the
-# configured accept ports, then start a single clean instance.
+# next start fail with "address already in use". Stop every variant, then free
+# the configured accept ports (with consent) before starting one clean instance.
 systemctl stop stunnel4 2>/dev/null || true
 systemctl stop 'stunnel@*' 2>/dev/null || true
-while IFS= read -r _port; do
-    [[ -n "$_port" ]] && free_tcp_port "$_port"
-done < <(grep -oE '^[[:space:]]*accept[[:space:]]*=[[:space:]]*[0-9.]+:[0-9]+' /etc/stunnel/stunnel.conf 2>/dev/null | grep -oE '[0-9]+$')
+
+held_ports=()
+if command -v ss >/dev/null 2>&1; then
+    while IFS= read -r _port; do
+        [[ -n "$_port" ]] || continue
+        ss -ltnH "sport = :$_port" 2>/dev/null | grep -q . && held_ports+=("$_port")
+    done < <(grep -oE '^[[:space:]]*accept[[:space:]]*=[[:space:]]*[0-9.]+:[0-9]+' /etc/stunnel/stunnel.conf 2>/dev/null | grep -oE '[0-9]+$')
+fi
+
+if [[ ${#held_ports[@]} -gt 0 ]]; then
+    echo "These stunnel accept ports are already in use by another process:"
+    for _port in "${held_ports[@]}"; do
+        echo "  - port $_port:"
+        port_holder "$_port" | sed 's/^/      /'
+    done
+    _free=0
+    if [[ "${NG_S4_FORCE_FREE:-0}" == "1" ]]; then
+        _free=1; echo "NG_S4_FORCE_FREE=1 set: freeing without prompting."
+    elif [[ -t 0 ]]; then
+        read -r -p "Terminate the above processes and free the ports? [y/N] " _ans
+        case "$_ans" in [Yy]*) _free=1;; esac
+    else
+        echo "Non-interactive shell; set NG_S4_FORCE_FREE=1 to free automatically."
+    fi
+    if [[ "$_free" == "1" ]]; then
+        for _port in "${held_ports[@]}"; do free_tcp_port "$_port"; done
+    else
+        echo "Leaving the ports in place; stunnel may fail to bind."
+    fi
+fi
+
 systemctl enable stunnel4 >/dev/null 2>&1 || true
 systemctl start stunnel4 || error_exit "Failed to start stunnel4 (see: journalctl -xeu stunnel4)."
 start_or_restart nginx
