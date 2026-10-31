@@ -19,6 +19,13 @@ MASTER_ENV="$REAL_ENV_DIR/master.env"
 # shellcheck source=../example.env/master.env
 . "$MASTER_ENV" || error_exit "Failed to source master.env"
 
+# Fall back to the subnet of the default route when LAN_CIDR is left blank. The
+# loopback that stunnel accepts on is always 127.0.0.1, so it needs no detection.
+if [[ -z "${LAN_CIDR:-}" ]]; then
+    LAN_CIDR="$(ip -4 route show 2>/dev/null | awk '/ src / && $1 ~ /\// {print $1; exit}')"
+    [[ -n "$LAN_CIDR" ]] && echo "LAN_CIDR not set; using detected subnet $LAN_CIDR."
+fi
+
 for v in envDr scriptsDr NGINX_CONF_FILENAME STUNNEL_CONF_FILENAME NGINX_USER \
          NGINX_GROUP NGINX_WEB_ROOT HLS_BASE_DIR NGINX_HTTP_PORT LAN_CIDR LOG_DIR; do
     [[ -n "${!v:-}" ]] || error_exit "Essential variable '$v' is not set in master.env."
@@ -37,7 +44,6 @@ install -d -o stunnel4 -g stunnel4 /var/run/stunnel || error_exit "Failed to cre
 chmod 0755 "$HLS_BASE_DIR"
 
 echo "Generating stunnel certificate..."
-chmod +x "$scriptsDr/generate-stunnel-cert.sh" 2>/dev/null || true
 bash "$scriptsDr/generate-stunnel-cert.sh" || error_exit "Failed to generate stunnel certificate."
 
 echo "Installing stunnel configuration..."
@@ -100,8 +106,33 @@ start_or_restart() {
         systemctl start "$1" || error_exit "Failed to start $1."
     fi
 }
+
+# Kill whatever still listens on a TCP port so a restart can bind it cleanly.
+free_tcp_port() {
+    local port="$1" pid n
+    command -v ss >/dev/null 2>&1 || return 0
+    for n in 1 2 3 4 5; do
+        ss -ltnH "sport = :$port" 2>/dev/null | grep -q . || return 0
+        pid="$(ss -ltnpH "sport = :$port" 2>/dev/null | grep -oE 'pid=[0-9]+' | head -n1 | cut -d= -f2)"
+        [[ -n "$pid" ]] && { echo "  freeing port $port (pid $pid)"; kill "$pid" 2>/dev/null; }
+        sleep 0.3
+    done
+    pid="$(ss -ltnpH "sport = :$port" 2>/dev/null | grep -oE 'pid=[0-9]+' | head -n1 | cut -d= -f2)"
+    [[ -n "$pid" ]] && kill -9 "$pid" 2>/dev/null || true
+}
+
 echo "Enabling and starting services..."
-start_or_restart stunnel4
+# Ubuntu's stunnel4 ships both an LSB service and a native stunnel@.service; a
+# leftover or duplicate instance can keep holding the accept port and make the
+# next start fail with "address already in use". Stop every variant and free the
+# configured accept ports, then start a single clean instance.
+systemctl stop stunnel4 2>/dev/null || true
+systemctl stop 'stunnel@*' 2>/dev/null || true
+while IFS= read -r _port; do
+    [[ -n "$_port" ]] && free_tcp_port "$_port"
+done < <(grep -oE '^[[:space:]]*accept[[:space:]]*=[[:space:]]*[0-9.]+:[0-9]+' /etc/stunnel/stunnel.conf 2>/dev/null | grep -oE '[0-9]+$')
+systemctl enable stunnel4 >/dev/null 2>&1 || true
+systemctl start stunnel4 || error_exit "Failed to start stunnel4 (see: journalctl -xeu stunnel4)."
 start_or_restart nginx
 
 echo
