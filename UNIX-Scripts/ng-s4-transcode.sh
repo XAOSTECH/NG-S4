@@ -24,7 +24,8 @@ get() { local _n="$1"; printf '%s' "${!_n:-$2}"; }
 
 # --- Locate and load configuration ------------------------------------------
 # /etc/default/ng-s4 (written by setup-restream.sh) points at the live master.env.
-if [[ -r /etc/default/ng-s4 ]]; then
+# An explicit NG_S4_MASTER_ENV in the environment wins, so tests can override it.
+if [[ -z "${NG_S4_MASTER_ENV:-}" && -r /etc/default/ng-s4 ]]; then
     # shellcheck source=/dev/null
     . /etc/default/ng-s4
 fi
@@ -97,8 +98,9 @@ if source_is_hdr; then SRC_HDR=1; log "source treated as HDR"; else SRC_HDR=0; l
 # Builds the global CMD array for one target id (e.g. TW, YT, KI).
 build_target_cmd() {
     local id="$1"
-    local label url key vcodec hdr scale fps vbr maxr buf abr gop
+    local label ingest url key vcodec hdr scale fps vbr maxr buf abr gop
     label="$(get "${id}_LABEL" "$id")"
+    ingest="$(get "${id}_INGEST" rtmp)"
     url="$(get "${id}_URL" '')"
     key="$(get "${id}_KEY" '')"
     vcodec="$(get "${id}_VCODEC" h264)"
@@ -112,8 +114,11 @@ build_target_cmd() {
     gop="$(get "${id}_GOP_SECONDS" 2)"
 
     [[ -n "$url" ]] || { log "$label: no URL set, skipping"; return 1; }
-    [[ -n "$key" ]] || { log "$label: no stream key set, skipping"; return 1; }
-    case "$key" in your_*_stream_key_here) log "$label: placeholder key, skipping"; return 1;; esac
+    # The local sink is for keyless testing, so it needs no stream key.
+    if [[ "$ingest" != "local" ]]; then
+        [[ -n "$key" ]] || { log "$label: no stream key set, skipping"; return 1; }
+        case "$key" in your_*_stream_key_here) log "$label: placeholder key, skipping"; return 1;; esac
+    fi
 
     local tonemap=0
     [[ "$SRC_HDR" == "1" && "$hdr" == "sdr" ]] && tonemap=1
@@ -222,14 +227,19 @@ build_target_cmd() {
         local IFS=,; vf="${filt[*]}"; unset IFS
     fi
 
-    # Output: HLS PUT over HTTPS (YouTube HDR) or FLV over RTMP (Twitch, Kick).
-    # For HLS, an optional *_STUNNEL_PORT routes through a local stunnel proxy
-    # instead of direct HTTPS; the Host header is then set explicitly so the
-    # remote server accepts the request despite it arriving from 127.0.0.1.
-    local ingest; ingest="$(get "${id}_INGEST" rtmp)"
+    # Output: local HLS sink (keyless testing), HLS PUT over HTTPS/stunnel
+    # (YouTube HDR), or FLV over RTMP (Twitch, Kick). For HLS an optional
+    # *_STUNNEL_PORT routes the PUT through a local stunnel proxy; the Host
+    # header is then set so the remote accepts a request from 127.0.0.1.
     local out
     local -a out_args=()
-    if [[ "$ingest" == "hls" ]]; then
+    if [[ "$ingest" == "local" ]]; then
+        mkdir -p "$url" 2>/dev/null || true
+        out="${url%/}/index.m3u8"
+        out_args=(-f hls -hls_time "$(get "${id}_HLS_TIME" 2)"
+                  -hls_list_size "$(get "${id}_HLS_SEGS" 6)"
+                  -hls_flags delete_segments -hls_segment_type mpegts "$out")
+    elif [[ "$ingest" == "hls" ]]; then
         local hlstime hlssegs stunport
         hlstime="$(get "${id}_HLS_TIME" 2)"
         hlssegs="$(get "${id}_HLS_SEGS" 5)"
