@@ -62,7 +62,12 @@ else
 fi
 
 LOG_ROOT="$(get TRANSCODE_LOG_DIR "${LOG_DIR:-/var/log/ng-s4}")"
-mkdir -p "$LOG_ROOT" 2>/dev/null || LOG_ROOT="/tmp"
+# Fall back to a writable temp dir when the log dir is missing or not writable
+# (e.g. running the engine by hand as a non-root, non-www-data user).
+if ! mkdir -p "$LOG_ROOT" 2>/dev/null || [[ ! -w "$LOG_ROOT" ]]; then
+    LOG_ROOT="${TMPDIR:-/tmp}/ng-s4"
+    mkdir -p "$LOG_ROOT" 2>/dev/null || LOG_ROOT="${TMPDIR:-/tmp}"
+fi
 # When launched by nginx there is no terminal, so keep a combined engine log.
 if [[ ! -t 1 ]]; then
     exec >>"$LOG_ROOT/transcode-${STREAM_NAME}.log" 2>&1
@@ -247,7 +252,7 @@ build_target_cmd() {
         out="${url%/}/index.m3u8"
         out_args=(-f hls -hls_time "$(get "${id}_HLS_TIME" 2)"
                   -hls_list_size "$(get "${id}_HLS_SEGS" 6)"
-                  -hls_flags delete_segments -hls_segment_type mpegts "$out")
+                  -hls_flags delete_segments+temp_file -hls_segment_type mpegts "$out")
     elif [[ "$ingest" == "hls" ]]; then
         local hlstime hlssegs stunport
         hlstime="$(get "${id}_HLS_TIME" 2)"
