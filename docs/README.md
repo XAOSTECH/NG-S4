@@ -64,11 +64,12 @@ The transcode engine detects the best encoder for the host at runtime, so the sa
 
 ## Core features
 
-*   **One ingest, many outputs:** publish once over RTMP (or SRT for HDR) and NG-S4 pushes a tailored encode to every enabled platform.
+*   **One ingest, many outputs:** publish once over RTMP and NG-S4 pushes a tailored encode to every enabled platform.
 *   **Per-platform profiles:** resolution, frame rate, codec, bitrate ceiling, buffer and HDR/SDR are configured independently per target in `master.env`.
-*   **HDR aware:** HDR sources pass through to HDR targets (HEVC Main10, BT.2020/PQ) and are tone-mapped to SDR (BT.709) for platforms that do not support HDR.
+*   **HDR aware:** HDR sources pass through to HDR targets (HEVC Main10, BT.2020/PQ via YouTube's HLS ingest) and are tone-mapped to SDR (BT.709) for platforms that do not support HDR.
 *   **Hardware accelerated:** NVENC on NVIDIA hosts, V4L2 M2M on Raspberry Pi, automatic software fallback, all selected at runtime.
-*   **RTMPS via stunnel4:** platforms that require TLS (YouTube, Kick) are reached through local stunnel tunnels.
+*   **YouTube HLS ingest:** YouTube HDR live streams use YouTube's HLS ingest endpoint over HTTPS; ffmpeg pushes HEVC segments directly, no stunnel required.
+*   **RTMPS via stunnel4:** platforms that require RTMPS (Kick) are reached through a local stunnel tunnel.
 *   **HLS preview:** the ingest is also published as low-latency HLS for monitoring on the LAN.
 *   **LAN friendly:** the allowed publish/play network is a single configuration value.
 *   **Host agnostic:** scripts derive their own paths and write no home directory into any config.
@@ -78,11 +79,11 @@ The transcode engine detects the best encoder for the host at runtime, so the sa
 
 ```mermaid
 flowchart LR
-    SRC["OBS / camera<br/>H.264 (RTMP) or HEVC HDR (SRT)"] -->|publish| ING["nginx ingest<br/>app: ingest"]
+    SRC["OBS / camera<br/>H.264 over RTMP"] -->|publish| ING["nginx ingest<br/>app: ingest"]
     ING -->|on publish: exec| ENG["ng-s4-transcode.sh"]
     ING -.->|HLS| LAN["LAN preview players"]
     ENG -->|"H.264 SDR, 6000k, 1080p"| TW["Twitch (RTMP)"]
-    ENG -->|"HEVC HDR passthrough"| YTS["stunnel :19351"] --> YT["YouTube (RTMPS)"]
+    ENG -->|"HEVC HDR, HLS PUT"| YT["YouTube (HTTPS HLS ingest)"]
     ENG -->|"H.264 SDR"| KIS["stunnel :19352"] --> KI["Kick (RTMPS)"]
 ```
 
@@ -188,12 +189,12 @@ Each block is independent, so every platform gets exactly the format it needs.
 This is the shipped default. YouTube receives the HDR master, Twitch receives a tone-mapped SDR copy within its limits:
 
 ```bash
-# Twitch: direct RTMP, tone-mapped to SDR, 1080p30, hard 6000 kbps ceiling.
+# Twitch: tone-mapped to SDR, 1080p30, hard 6000 kbps ceiling.
 TW_ENABLE=1 TW_VCODEC=h264 TW_HDR=sdr TW_SCALE="1920:-2" TW_FPS=30
 TW_VBITRATE=6000k TW_MAXRATE=6000k TW_BUFSIZE=9000k
 
-# YouTube: RTMPS via stunnel, HDR preserved as HEVC Main10 at source resolution/fps.
-YT_ENABLE=1 YT_VCODEC=hevc YT_HDR=hdr YT_SCALE="" YT_FPS=""
+# YouTube: HLS ingest over HTTPS, HDR preserved as HEVC Main10 at source resolution/fps.
+YT_ENABLE=1 YT_INGEST=hls YT_VCODEC=hevc YT_HDR=hdr YT_SCALE="" YT_FPS=""
 YT_VBITRATE=45000k YT_MAXRATE=51000k YT_BUFSIZE=90000k
 ```
 
@@ -210,27 +211,10 @@ The engine chooses an encoder backend at runtime (override with `ENCODER_BACKEND
 
 Run `UNIX-Scripts/ng-s4-doctor.sh` on each machine to print the detected backend, available encoders, HDR tone-mapping filters and the status of every configured target.
 
-## HDR ingest note
-
-The nginx RTMP module carries H.264/AAC only, so a true HDR (HEVC 10-bit) master cannot be ingested over RTMP.
-For HDR, ingest over SRT instead, which carries HEVC and HDR natively, and let the engine read it directly:
-
-```bash
-# In master.env:
-export INGEST_INPUT="srt://0.0.0.0:9000?mode=listener&latency=200"
-
-# Run the engine as the ingest (for example under systemd, or manually):
-sudo -u www-data /usr/local/bin/ng-s4-transcode.sh hdr
-```
-
-OBS can output SRT (MPEG-TS) with an HEVC encoder for this path.
-For SDR H.264 sources, the default RTMP ingest with the nginx `exec` trigger needs no extra steps.
-
 ## LAN access and firewall
 
 *   Set `LAN_CIDR` to your subnet so other machines may publish and play.
 *   Open the required ports on the host firewall (for example with `ufw`): `1935/tcp` for RTMP and `NGINX_HTTP_PORT` (default `8080`) for HLS, stats and health.
-*   SRT ingest (if used) listens on its own UDP port, for example `9000/udp`.
 
 ## Managing services
 
@@ -258,9 +242,11 @@ Bitrate, frame rate and audio settings can be overridden with environment variab
 
 ## Stunnel and RTMPS
 
-Targets whose `*_URL` points at `127.0.0.1:<port>` are delivered over TLS by stunnel.
-The accept ports in `real.env/stunnel.conf` must match `YT_STUNNEL_PORT` / `KI_STUNNEL_PORT` in `master.env` (defaults `19351` and `19352`).
+Kick uses RTMPS, delivered by pushing plain RTMP to a local stunnel port that wraps it in TLS.
+The accept port in `real.env/stunnel.conf` must match `KI_STUNNEL_PORT` in `master.env` (default `19352`).
 Set the correct Kick ingest host in `stunnel.conf`; the certificate is generated by the setup script (regenerate manually with `sudo bash UNIX-Scripts/generate-stunnel-cert.sh`).
+
+YouTube does **not** use stunnel: the engine pushes HEVC segments directly to YouTube's HLS ingest endpoint over HTTPS, which ffmpeg handles natively.
 
 ## Resetting
 
