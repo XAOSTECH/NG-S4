@@ -13,8 +13,17 @@
 
 set -u
 
-# nginx `exec` may run with a minimal PATH, so guarantee the usual locations.
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin${PATH:+:$PATH}"
+# nginx `exec` may run with a minimal PATH. Ensure the usual locations are
+# present, but APPEND them so a caller-provided PATH (e.g. a test mock) keeps
+# precedence over the system binaries.
+for _d in /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin; do
+    case ":${PATH:-}:" in
+        *":$_d:"*) ;;
+        *) PATH="${PATH:+$PATH:}$_d";;
+    esac
+done
+export PATH
+unset _d
 
 log() { printf '%s [ng-s4] %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$*"; }
 die() { log "ERROR: $*"; exit 1; }
