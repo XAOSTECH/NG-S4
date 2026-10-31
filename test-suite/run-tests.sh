@@ -238,7 +238,34 @@ else
 fi
 
 # --------------------------------------------------------------------------
-section "6. Disabled target is skipped"
+section "6. YouTube: HDR output, HLS ingest via stunnel (Host header)"
+# --------------------------------------------------------------------------
+CONF_STUN="$WORK/stun.env"
+sed 's/^export YT_STUNNEL_PORT=""/export YT_STUNNEL_PORT="19351"/' "$CONF" > "$CONF_STUN"
+LOG="$WORK/yt_stun.log"; : > "$LOG"
+FFCMD_LOG="$LOG" NG_S4_MASTER_ENV="$CONF_STUN" \
+    LOG_DIR="$WORK/logs" TRANSCODE_LOG_DIR="$WORK/logs" \
+    SOURCE_HDR=hdr ENCODER_BACKEND=software \
+    bash "$ENGINE" live 2>/dev/null
+YT_STUN=$(grep '127.0.0.1:19351' "$LOG" || true)
+if [[ -n "$YT_STUN" ]]; then
+    ok "YouTube stunnel path targets local port 19351"
+else
+    ng "YouTube stunnel command not found (expected 127.0.0.1:19351)"
+fi
+if printf '%s' "$YT_STUN" | grep -q 'Host:.*upload.youtube.com'; then
+    ok "Host header set to a.upload.youtube.com for stunnel path"
+else
+    ng "Host header missing or incorrect for stunnel HLS path"
+fi
+if printf '%s' "$YT_STUN" | grep -q '^http://'; then
+    ok "YouTube stunnel path uses plain HTTP (stunnel adds TLS)"
+else
+    ng "YouTube stunnel path URL should be http:// not https://"
+fi
+
+# --------------------------------------------------------------------------
+section "7. Disabled target is skipped"
 # --------------------------------------------------------------------------
 LOG="$WORK/ki.log"; : > "$LOG"
 run_engine "$LOG" SOURCE_HDR=sdr ENCODER_BACKEND=software
@@ -249,7 +276,7 @@ else
 fi
 
 # --------------------------------------------------------------------------
-section "7. Placeholder stream key is skipped"
+section "8. Placeholder stream key is skipped"
 # --------------------------------------------------------------------------
 CONF2="$WORK/placeholder.env"
 sed 's/TW_KEY="tw_testkey"/TW_KEY="your_twitch_stream_key_here"/' "$CONF" > "$CONF2"
@@ -264,7 +291,7 @@ else
 fi
 
 # --------------------------------------------------------------------------
-section "8. Test video probe"
+section "9. Test video probe"
 # --------------------------------------------------------------------------
 VIDEO="$SUITE_DIR/testIMG+AUDIO.mkv"
 if [[ ! -f "$VIDEO" ]]; then
