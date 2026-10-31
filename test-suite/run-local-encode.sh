@@ -24,7 +24,7 @@ command -v ffmpeg >/dev/null 2>&1 || { echo "ffmpeg not found; run this on the h
 [[ -f "$VIDEO" ]] || { echo "test video not found: $VIDEO"; exit 1; }
 
 rm -rf "$OUT"; mkdir -p "$OUT"
-echo "Transcoding '$VIDEO' -> '$OUT' for ${DURATION}s (backend: ${ENCODER_BACKEND:-auto}, source: ${SOURCE_HDR:-auto})..."
+echo "Transcoding '$VIDEO' -> '$OUT' for ${DURATION}s (backend: ${ENCODER_BACKEND:-auto}, source: ${SOURCE_HDR:-auto}, profile: ${LO_VCODEC:-h264}/${LO_HDR:-sdr})..."
 echo
 
 # NG_S4_MASTER_ENV is set explicitly so the engine ignores any installed
@@ -36,22 +36,22 @@ LO_URL="$OUT" INGEST_INPUT="$VIDEO" \
     || true
 
 echo
-if ls "$OUT"/*.m3u8 >/dev/null 2>&1; then
-    echo "PASS: HLS output written to $OUT"
+if [[ -s "$OUT/index.m3u8" ]]; then
+    echo "PASS: HLS playlist written to $OUT"
     ls -la "$OUT" | sed 's/^/  /'
     if command -v ffprobe >/dev/null 2>&1; then
-        seg="$(find "$OUT" -name '*.ts' | head -n1)"
+        seg="$(find "$OUT" -name '*.ts' -size +0c | sort | head -n1)"
         if [[ -n "$seg" ]]; then
-            echo "First segment properties:"
-            ffprobe -v error \
-                -show_entries stream=codec_name,codec_type,width,height,color_transfer \
+            echo "First complete segment ($(basename "$seg")):"
+            ffprobe -v error -select_streams v:0 \
+                -show_entries stream=codec_name,width,height,color_transfer,pix_fmt \
                 -of compact "$seg" | sed 's/^/  /'
         fi
     fi
     echo "Play it:  ffplay $OUT/index.m3u8"
     exit 0
 else
-    echo "FAIL: no HLS output produced."
-    echo "Check the engine log (printed above, or under /var/log/ng-s4 or /tmp)."
+    echo "FAIL: no valid HLS playlist produced (index.m3u8 missing or empty)."
+    echo "Check the engine output above, or the per-target log it printed."
     exit 1
 fi
