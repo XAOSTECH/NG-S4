@@ -223,18 +223,34 @@ build_target_cmd() {
     fi
 
     # Output: HLS PUT over HTTPS (YouTube HDR) or FLV over RTMP (Twitch, Kick).
+    # For HLS, an optional *_STUNNEL_PORT routes through a local stunnel proxy
+    # instead of direct HTTPS; the Host header is then set explicitly so the
+    # remote server accepts the request despite it arriving from 127.0.0.1.
     local ingest; ingest="$(get "${id}_INGEST" rtmp)"
     local out
     local -a out_args=()
     if [[ "$ingest" == "hls" ]]; then
-        local hlstime hlssegs
+        local hlstime hlssegs stunport
         hlstime="$(get "${id}_HLS_TIME" 2)"
         hlssegs="$(get "${id}_HLS_SEGS" 5)"
-        out="${url}?cid=${key}&copy=0&file=live.m3u8"
-        out_args=(-f hls -hls_time "$hlstime" -hls_list_size "$hlssegs"
-                  -hls_flags delete_segments+append_list
-                  -hls_segment_type mpegts
-                  -method PUT -http_persistent 1 "$out")
+        stunport="$(get "${id}_STUNNEL_PORT" '')"
+        if [[ -n "$stunport" ]]; then
+            local host path
+            host="${url#https://}"; host="${host%%/*}"
+            path="${url#https://*/}"
+            out="http://127.0.0.1:${stunport}/${path}?cid=${key}&copy=0&file=live.m3u8"
+            out_args=(-headers "Host: ${host}\r\n"
+                      -f hls -hls_time "$hlstime" -hls_list_size "$hlssegs"
+                      -hls_flags delete_segments+append_list
+                      -hls_segment_type mpegts
+                      -method PUT -http_persistent 1 "$out")
+        else
+            out="${url}?cid=${key}&copy=0&file=live.m3u8"
+            out_args=(-f hls -hls_time "$hlstime" -hls_list_size "$hlssegs"
+                      -hls_flags delete_segments+append_list
+                      -hls_segment_type mpegts
+                      -method PUT -http_persistent 1 "$out")
+        fi
     else
         out="${url%/}/${key}"
         out_args=(-f flv "$out")
