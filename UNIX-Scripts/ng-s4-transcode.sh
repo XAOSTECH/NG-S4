@@ -31,6 +31,15 @@ die() { log "ERROR: $*"; exit 1; }
 # Read <VAR> with a fallback, using indirect expansion so profiles stay flat.
 get() { local _n="$1"; printf '%s' "${!_n:-$2}"; }
 
+# Cap a "<n>k" bitrate at a "<n>k" limit, returning the smaller. Empty or
+# non-numeric inputs are returned unchanged.
+cap_rate() {
+    local v="$1" lim="$2" vn ln
+    vn="${v%k}"; ln="${lim%k}"
+    [[ "$vn" =~ ^[0-9]+$ && "$ln" =~ ^[0-9]+$ ]] || { printf '%s' "$v"; return; }
+    if (( vn > ln )); then printf '%sk' "$ln"; else printf '%s' "$v"; fi
+}
+
 # --- Locate and load configuration ------------------------------------------
 # /etc/default/ng-s4 (written by setup-restream.sh) points at the live master.env.
 # An explicit NG_S4_MASTER_ENV in the environment wins, so tests can override it.
@@ -139,6 +148,14 @@ build_target_cmd() {
     buf="$(get "${id}_BUFSIZE" "$maxr")"
     abr="$(get "${id}_ABITRATE" 160k)"
     gop="$(get "${id}_GOP_SECONDS" 2)"
+
+    # Apply the global upstream bitrate ceiling (empty disables it).
+    local bwlim; bwlim="$(get MAX_VIDEO_BITRATE '')"
+    if [[ -n "$bwlim" ]]; then
+        vbr="$(cap_rate "$vbr" "$bwlim")"
+        maxr="$(cap_rate "$maxr" "$bwlim")"
+        buf="$(cap_rate "$buf" "$bwlim")"
+    fi
 
     [[ -n "$url" ]] || { log "$label: no URL set, skipping"; return 1; }
     # The local sink is for keyless testing, so it needs no stream key.
