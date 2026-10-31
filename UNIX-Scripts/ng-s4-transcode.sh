@@ -91,22 +91,35 @@ detect_backend() {
 BACKEND="$(detect_backend)"
 log "encoder backend: $BACKEND"
 
-# --- Source HDR detection ---------------------------------------------------
-source_is_hdr() {
-    case "${SOURCE_HDR:-auto}" in
-        hdr) return 0;;
-        sdr) return 1;;
+# --- Probe the source once (colour transfer, frame rate, geometry) ----------
+# Used to pick HDR vs SDR, keep the native resolution/frame rate, and size the
+# keyframe interval to the real frame rate. The engine never upscales.
+SRC_TRC=""; SRC_FPS=""; SRC_W=""; SRC_H=""
+if command -v ffprobe >/dev/null 2>&1; then
+    _probe="$(timeout 6 ffprobe -v error -select_streams v:0 \
+        -show_entries stream=color_transfer,r_frame_rate,width,height \
+        -of default=nw=1 "$INPUT_URL" 2>/dev/null)"
+    SRC_TRC="$(sed -n 's/^color_transfer=//p' <<<"$_probe" | head -n1)"
+    SRC_W="$(sed -n 's/^width=//p' <<<"$_probe" | head -n1)"
+    SRC_H="$(sed -n 's/^height=//p' <<<"$_probe" | head -n1)"
+    _rfr="$(sed -n 's/^r_frame_rate=//p' <<<"$_probe" | head -n1)"
+    case "$_rfr" in
+        */*) SRC_FPS="$(awk -F/ '{ if ($2 > 0) { f = $1 / $2; if (f >= 1) printf "%.0f", f } }' <<<"$_rfr")";;
+        [1-9]*) SRC_FPS="$_rfr";;
     esac
-    local trc
-    trc="$(timeout 6 ffprobe -v error -select_streams v:0 \
-        -show_entries stream=color_transfer -of default=nk=1:nw=1 \
-        "$INPUT_URL" 2>/dev/null | head -n1)"
-    case "$trc" in
-        smpte2084|arib-std-b67) return 0;;
-        *) [[ "${SOURCE_HDR_DEFAULT:-sdr}" == "hdr" ]] && return 0 || return 1;;
-    esac
-}
-if source_is_hdr; then SRC_HDR=1; log "source treated as HDR"; else SRC_HDR=0; log "source treated as SDR"; fi
+    unset _probe _rfr
+fi
+
+case "${SOURCE_HDR:-auto}" in
+    hdr) SRC_HDR=1;;
+    sdr) SRC_HDR=0;;
+    *) case "$SRC_TRC" in
+           smpte2084|arib-std-b67) SRC_HDR=1;;
+           *) if [[ "${SOURCE_HDR_DEFAULT:-sdr}" == "hdr" ]]; then SRC_HDR=1; else SRC_HDR=0; fi;;
+       esac;;
+esac
+if [[ "$SRC_HDR" == "1" ]]; then log "source treated as HDR"; else log "source treated as SDR"; fi
+if [[ -n "$SRC_W$SRC_H$SRC_FPS" ]]; then log "source: ${SRC_W:-?}x${SRC_H:-?} @ ${SRC_FPS:-?}fps"; fi
 
 # --- Per target ffmpeg command construction ---------------------------------
 # Builds the global CMD array for one target id (e.g. TW, YT, KI).
@@ -162,19 +175,39 @@ build_target_cmd() {
     fi
     in_args+=(-i "$INPUT_URL")
 
+    # Effective output frame rate: honour a target cap, but never upsample a
+    # slower source (duplicating frames just wastes bitrate).
+    local fpsval apply_fps=0
+    if [[ -n "$fps" ]]; then
+        if [[ -z "$SRC_FPS" || "$SRC_FPS" -gt "$fps" ]]; then
+            apply_fps=1; fpsval="$fps"
+        else
+            fpsval="$SRC_FPS"
+        fi
+    else
+        fpsval="${SRC_FPS:-$(get SOURCE_FPS_HINT 60)}"
+    fi
+
     # Video filters.
     local -a filt=()
     if [[ "$vcodec" != "copy" ]]; then
-        [[ -n "$scale" ]] && filt+=("scale=${scale}:flags=lanczos")
-        [[ -n "$fps" ]] && filt+=("fps=${fps}")
+        if [[ -n "$scale" ]]; then
+            local _sw="${scale%%:*}" _sh="${scale#*:}"
+            if [[ "$_sw" =~ ^[0-9]+$ && ( "$_sh" == "-2" || "$_sh" == "-1" ) ]]; then
+                # Cap width at the source width so a smaller source is not upscaled.
+                filt+=("scale=w=min(iw\\,${_sw}):h=${_sh}:flags=lanczos")
+            else
+                filt+=("scale=${scale}:flags=lanczos")
+            fi
+        fi
+        [[ "$apply_fps" == "1" ]] && filt+=("fps=${fps}")
         if [[ "$tonemap" == "1" ]]; then
             filt+=("zscale=t=linear:npl=100" "format=gbrpf32le" "zscale=p=bt709" \
                    "tonemap=tonemap=hable:desat=0" "zscale=t=bt709:m=bt709:r=tv" "format=yuv420p")
         fi
     fi
 
-    # Keyframe interval in frames.
-    local fpsval="${fps:-$(get SOURCE_FPS_HINT 60)}"
+    # Keyframe interval in frames (from the effective output frame rate).
     local gopf=$(( fpsval * gop ))
 
     # Video encoder selection and options.
