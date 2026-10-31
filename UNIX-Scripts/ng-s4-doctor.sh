@@ -90,6 +90,19 @@ fi
 if filt_has tonemap; then pass "tonemap filter available"; else note "tonemap filter missing"; fi
 
 echo
+echo "Ingest protocols (output side):"
+if ffmpeg -hide_banner -protocols 2>/dev/null | grep -q 'https'; then
+    pass "HTTPS available (required for YouTube HLS ingest)"
+else
+    note "HTTPS not in ffmpeg protocols (YouTube HLS ingest will fail; needs ffmpeg with TLS)"
+fi
+if ffmpeg -hide_banner -protocols 2>/dev/null | grep -q 'rtmp'; then
+    pass "RTMP available (required for Twitch and Kick via stunnel)"
+else
+    note "RTMP not in ffmpeg protocols"
+fi
+
+echo
 echo "Server components:"
 if command -v nginx >/dev/null 2>&1; then
     pass "nginx present ($(nginx -v 2>&1 | awk -F/ '{print $2}'))"
