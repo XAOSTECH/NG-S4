@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Stream a gphoto2 compatible camera into the NG-S4 ingest for restreaming.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-Licence-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 XAOSTECH. Licensed under the GNU GPL v3 or later.
 # A commercial or separate licence is available on request from the owner.
 #
