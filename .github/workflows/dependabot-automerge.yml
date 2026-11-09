@@ -1,100 +1,80 @@
-name: Dependabot Auto-merge
+name: Dependabot Auto-Label
 
+# Runs in base-branch (privileged) context — safe because we gate on github.actor == 'dependabot[bot]' and never execute PR code.
 on:
   pull_request_target:
-    types: [opened, reopened, labeled, synchronize]
-  workflow_dispatch:
-    inputs:
-      pull_numbers:
-        description: 'PR numbers to merge (e.g. 1, 2, 3)'
-        required: false
-        type: string
+    types: [opened, synchronize, reopened]
 
 permissions:
   pull-requests: write
-  contents: write
-  checks: read
-  statuses: read
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  guard:
+  autolabel:
+    name: Label Dependabot PR for automerge
     runs-on: ubuntu-latest
-    outputs:
-      pr_numbers: ${{ steps.check.outputs.pr_numbers }}
-      should_merge: ${{ steps.check.outputs.should_merge }}
+    if: github.actor == 'dependabot[bot]'
+
     steps:
-      - name: Inspect PR author/labels
-        id: check
-        uses: actions/github-script@v6
-        env:
-          PULL_NUMBERS: ${{ github.event.inputs.pull_numbers }}
+      - name: Get bot token
+        id: app_token
+        uses: actions/create-github-app-token@v3
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { owner, repo } = context.repo;
-            let prNumbers = [];
-            
-            if (process.env.PULL_NUMBERS) {
-              prNumbers = process.env.PULL_NUMBERS
-                .split(/[,\s]+/)
-                .map(n => parseInt(n.trim(), 10))
-                .filter(n => !isNaN(n));
-            } else if (context.payload.pull_request && context.payload.pull_request.number) {
-              prNumbers = [context.payload.pull_request.number];
-            }
-            
-            if (prNumbers.length === 0) {
-              core.info('No PR numbers found.');
-              core.setOutput('pr_numbers', '[]');
-              core.setOutput('should_merge', 'false');
-              return;
-            }
+          client-id: ${{ secrets.XB_CI }}
+          private-key: ${{ secrets.XB_PK }}
 
-            const validPRs = [];
-            for (const prNum of prNumbers) {
-              try {
-                const prRes = await github.rest.pulls.get({ owner, repo, pull_number: prNum });
-                const pr = prRes.data;
-                const author = pr.user && pr.user.login;
-                const labels = (pr.labels || []).map(l => l.name);
-                const isDependabot = !!author && (author === 'dependabot[bot]' || author.toLowerCase().includes('dependabot'));
-                const hasAutomergeLabel = labels.includes('automerge') || labels.includes('dependabot/automerge') || labels.includes('auto-merge');
-                
-                if (isDependabot || hasAutomergeLabel) {
-                  validPRs.push(prNum);
-                  core.info(`PR #${prNum} valid (author=${author}, isDependabot=${isDependabot})`);
-                } else {
-                  core.info(`PR #${prNum} skipped (not Dependabot and no automerge label)`);
-                }
-              } catch (error) {
-                core.info(`PR #${prNum} not found or error: ${error.message}`);
-              }
-            }
-            
-            core.setOutput('pr_numbers', JSON.stringify(validPRs));
-            core.setOutput('should_merge', String(validPRs.length > 0));
-
-
-  automerge-dependabot:
-    needs: guard
-    if: needs.guard.outputs.should_merge == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Merge PRs
-        uses: actions/github-script@v6
+      - name: Decide whether to automerge
+        id: decide
         env:
-          PR_NUMBERS: ${{ needs.guard.outputs.pr_numbers }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { owner, repo } = context.repo;
-            const prNumbers = JSON.parse(process.env.PR_NUMBERS || '[]');
-            
-            for (const prNumber of prNumbers) {
-              try {
-                await github.rest.pulls.merge({ owner, repo, pull_number: prNumber });
-                core.info(`Merged PR #${prNumber}`);
-              } catch (error) {
-                core.setFailed(`Failed to merge PR #${prNumber}: ${error.message}`);
-              }
-            }
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # Grouped PRs ("Bump the X group with Y updates") are always minor/patch by config
+          if echo "$PR_TITLE" | grep -qiE 'bump the .+ group'; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "reason=grouped minor/patch update" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Individual bump — compare leading major version numbers
+          FROM=$(echo "$PR_TITLE" | grep -oP 'from \K[0-9]+' | head -1 || true)
+          TO=$(echo "$PR_TITLE"   | grep -oP 'to \K[0-9]+'   | head -1 || true)
+
+          if [[ -n "$FROM" && -n "$TO" && "$FROM" != "$TO" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "reason=major version bump from $FROM to $TO — requires manual review" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "reason=minor/patch update" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Add automerge label
+        if: steps.decide.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REASON: ${{ steps.decide.outputs.reason }}
+        run: |
+          gh pr edit "$PR_NUMBER" --repo "${{ github.repository }}" --add-label "automerge"
+          echo "✅ Added automerge label — $REASON"
+
+      - name: Approve PR
+        if: steps.decide.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr review "$PR_NUMBER" --repo "${{ github.repository }}" --approve \
+            --body "Automated approval: minor/patch dependency update — safe to merge."
+
+      - name: Comment on major-version skip
+        if: steps.decide.outputs.skip == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REASON: ${{ steps.decide.outputs.reason }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" \
+            --body "⚠️ **Major version bump detected** — $REASON. Manual review required before merging."
