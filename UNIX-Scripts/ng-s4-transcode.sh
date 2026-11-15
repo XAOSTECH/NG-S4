@@ -13,9 +13,7 @@
 
 set -u
 
-# nginx `exec` may run with a minimal PATH. Ensure the usual locations are
-# present, but APPEND them so a caller-provided PATH (e.g. a test mock) keeps
-# precedence over the system binaries.
+# nginx `exec` may run with a minimal PATH. Ensure the usual locations are present, but APPEND them so a caller-provided PATH (e.g. a test mock) keeps precedence over the system binaries.
 for _d in /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin; do
     case ":${PATH:-}:" in
         *":$_d:"*) ;;
@@ -31,8 +29,7 @@ die() { log "ERROR: $*"; exit 1; }
 # Read <VAR> with a fallback, using indirect expansion so profiles stay flat.
 get() { local _n="$1"; printf '%s' "${!_n:-$2}"; }
 
-# Cap a "<n>k" bitrate at a "<n>k" limit, returning the smaller. Empty or
-# non-numeric inputs are returned unchanged.
+# Cap a "<n>k" bitrate at a "<n>k" limit, returning the smaller. Empty or non-numeric inputs are returned unchanged.
 cap_rate() {
     local v="$1" lim="$2" vn ln
     vn="${v%k}"; ln="${lim%k}"
@@ -101,8 +98,7 @@ BACKEND="$(detect_backend)"
 log "encoder backend: $BACKEND"
 
 # --- Probe the source once (colour transfer, frame rate, geometry) ----------
-# Used to pick HDR vs SDR, keep the native resolution/frame rate, and size the
-# keyframe interval to the real frame rate. The engine never upscales.
+# Used to pick HDR vs SDR, keep the native resolution/frame rate, and size the keyframe interval to the real frame rate. The engine never upscales.
 SRC_TRC=""; SRC_FPS=""; SRC_W=""; SRC_H=""
 if command -v ffprobe >/dev/null 2>&1; then
     _probe="$(timeout 6 ffprobe -v error -select_streams v:0 \
@@ -192,8 +188,7 @@ build_target_cmd() {
     fi
     in_args+=(-i "$INPUT_URL")
 
-    # Effective output frame rate: honour a target cap, but never upsample a
-    # slower source (duplicating frames just wastes bitrate).
+    # Effective output frame rate: honour a target cap, but never upsample a slower source (duplicating frames just wastes bitrate).
     local fpsval apply_fps=0
     if [[ -n "$fps" ]]; then
         if [[ -z "$SRC_FPS" || "$SRC_FPS" -gt "$fps" ]]; then

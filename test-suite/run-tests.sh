@@ -6,8 +6,7 @@
 # A commercial or separate licence is available on request from the owner.
 #
 # Requires: bash, shellcheck (optional), ffprobe (optional for video probe test).
-# Does NOT require a running nginx, stunnel or real ffmpeg - command assembly
-# tests use an in-process mock.
+# Does NOT require a running nginx, stunnel or real ffmpeg - command assembly tests use an in-process mock.
 #
 # Usage (from repo root or test-suite/):
 #   bash test-suite/run-tests.sh
