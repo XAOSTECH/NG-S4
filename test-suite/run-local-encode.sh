@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# NG-S4 host encode test: runs the real transcode engine against the bundled
-# test video and writes HLS to a local directory. No platform keys, no network.
+# NG-S4 host encode test: runs the real transcode engine against the bundled test video and writes HLS to a local directory. No platform keys, no network.
 #
 # SPDX-Licence-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 XAOSTECH. Licensed under the GNU GPL v3 or later.

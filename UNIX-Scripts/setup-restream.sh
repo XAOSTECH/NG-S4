@@ -19,8 +19,7 @@ MASTER_ENV="$REAL_ENV_DIR/master.env"
 # shellcheck source=../example.env/master.env
 . "$MASTER_ENV" || error_exit "Failed to source master.env"
 
-# Fall back to the subnet of the default route when LAN_CIDR is left blank. The
-# loopback that stunnel accepts on is always 127.0.0.1, so it needs no detection.
+# Fall back to the subnet of the default route when LAN_CIDR is left blank. The loopback that stunnel accepts on is always 127.0.0.1, so it needs no detection.
 if [[ -z "${LAN_CIDR:-}" ]]; then
     LAN_CIDR="$(ip -4 route show 2>/dev/null | awk '/ src / && $1 ~ /\// {print $1; exit}')"
     [[ -n "$LAN_CIDR" ]] && echo "LAN_CIDR not set; using detected subnet $LAN_CIDR."
@@ -125,10 +124,7 @@ free_tcp_port() {
 }
 
 echo "Enabling and starting services..."
-# Ubuntu's stunnel4 ships both an LSB service and a native stunnel@.service; a
-# leftover or duplicate instance can keep holding the accept port and make the
-# next start fail with "address already in use". Stop every variant, then free
-# the configured accept ports (with consent) before starting one clean instance.
+# Ubuntu's stunnel4 ships both an LSB service and a native stunnel@.service; a leftover or duplicate instance can keep holding the accept port and make the next start fail with "address already in use". Stop every variant, then free the configured accept ports (with consent) before starting one clean instance.
 systemctl stop stunnel4 2>/dev/null || true
 systemctl stop 'stunnel@*' 2>/dev/null || true
 
